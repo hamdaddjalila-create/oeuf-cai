@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق توزيع المنتجات للمحلات الكبرى</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+    <div class="flex h-screen overflow-hidden">
+        <!-- القائمة الجانبية -->
+        <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between p-4">
+            <div class="space-y-6">
+                <div class="flex items-center gap-3 px-2">
+                    <span class="text-3xl">🏬</span>
+                    <div>
+                        <h1 class="font-bold text-amber-400 text-sm">توزيع البضائع Pro</h1>
+                        <p class="text-[10px] text-slate-400">نظام إدارة المحلات الكبرى</p>
+                    </div>
+                </div>
+                <nav class="space-y-2">
+                    <button onclick="st('orders')" id="nav-orders" class="w-full text-right px-4 py-3 rounded-xl font-bold bg-amber-600 text-white flex items-center gap-2">🛒 <span>كتابة وصل جديد</span></button>
+                    <button onclick="st('archive')" id="nav-archive" class="w-full text-right px-4 py-3 rounded-xl font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-2">📂 <span>أرشيف الوصولات</span></button>
+                    <button onclick="st('products')" id="nav-products" class="w-full text-right px-4 py-3 rounded-xl font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-2">🏷️ <span>إدارة المنتجات</span></button>
+                    <button onclick="st('clients')" id="nav-clients" class="w-full text-right px-4 py-3 rounded-xl font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-2">🏪 <span>المحلات والموردين</span></button>
+                </nav>
+            </div>
+            <div class="text-xs text-slate-500 text-center border-t border-slate-800 pt-3">تطبيق سحابي 100%</div>
+        </aside>
+
+        <!-- المحتوى الرئيسي -->
+        <div class="flex-1 flex flex-col overflow-y-auto">
+            <header class="bg-white shadow-sm border-b h-16 flex items-center justify-between px-6">
+                <h2 id="page-title" class="text-lg font-bold text-slate-700">كتابة وصل جديد</h2>
+                <div id="scanner-status" class="text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full hidden">📷 الماسح جاهز</div>
+            </header>
+
+            <main class="p-6 space-y-6">
+                <!-- 1. قسم كتابة الوصل -->
+                <div id="v-orders" class="sec space-y-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">اسم المحل التجاري المستهدف:</label>
+                                <select id="o-client" class="w-full border p-3 rounded-xl text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-amber-500">
+                                    <option value="">اختر المحل...</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end gap-2">
+                                <button onclick="startScanner('order')" class="bg-blue-600 text-white px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-blue-700">
+                                    📷 مسح باركود سلعة
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- جدول السلع داخل الوصل -->
+                        <div class="border-t border-b py-4 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-sm">تفاصيل السلع في الوصل:</span>
+                                <button onclick="addRow()" class="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ إضافة سلعة أخرى</button>
+                            </div>
+                            <div id="o-rows" class="space-y-2"></div>
+                        </div>
+
+                        <!-- إجمالي الوصل والتاريخ -->
+                        <div class="flex justify-between items-center bg-amber-50 p-4 rounded-xl border border-amber-200">
+                            <div>
+                                <span class="text-xs text-amber-800 font-bold block">التاريخ والوقت الحالي:</span>
+                                <span id="current-time-display" class="text-xs font-mono text-slate-600">--/--/---- --:--</span>
+                            </div>
+                            <div class="text-left">
+                                <span class="text-xs text-slate-500 block">الإجمالي الكلي:</span>
+                                <span id="o-tot" class="text-2xl font-bold text-amber-700">0.00 DZD</span>
+                            </div>
+                        </div>
+
+                        <!-- أزرار حفظ وإلغاء وطباعة الوصل -->
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="clearOrderForm()" class="bg-slate-200 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-bold">إلغاء / تفريغ</button>
+                            <button onclick="svOrder(false)" class="bg-amber-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-amber-700">💾 حفظ الوصل للأرشيف</button>
+                            <button onclick="svOrder(true)" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-700">🖨️ حفظ وطباعة الوصل</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. أرشيف الوصولات -->
+                <div id="v-archive" class="sec space-y-4 hidden">
+                    <div class="flex justify-between items-center flex-wrap gap-3">
+                        <h3 class="text-xl font-bold">أرشيف الوصولات المحفوظة</h3>
+                        <input type="text" id="srch-archive" oninput="filArchive()" placeholder="بحث باسم المحل أو رقم الوصل..." class="border px-4 py-2 rounded-xl text-sm outline-none bg-white w-64">
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
+                        <table class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
+                                    <th class="p-4">رقم الوصل</th>
+                                    <th class="p-4">التاريخ والوقت</th>
+                                    <th class="p-4">المحل</th>
+                                    <th class="p-4">عدد السلع</th>
+                                    <th class="p-4">الإجمالي</th>
+                                    <th class="p-4 text-center">الإجراءات (تعديل / حذف / طباعة)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tb-orders" class="divide-y text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. إدارة المنتجات والأسعار -->
+                <div id="v-products" class="sec space-y-4 hidden">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold">إدارة المنتجات والأسعار</h3>
+                        <button onclick="om('product')" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-bold">+ إضافة منتج جديد</button>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
+                        <table class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
+                                    <th class="p-4">اسم المنتوج</th>
+                                    <th class="p-4">الكود بار (Barcode)</th>
+                                    <th class="p-4">سعر البيع</th>
+                                    <th class="p-4 text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tb-products" class="divide-y text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 4. إدارة المحلات والموردين -->
+                <div id="v-clients" class="sec space-y-4 hidden">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold">إدارة المحلات والموردين</h3>
+                        <button onclick="om('client')" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-bold">+ إضافة محل / مورد جديد</button>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
+                        <table class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
+                                    <th class="p-4">اسم المحل / المورد</th>
+                                    <th class="p-4">رقم الهاتف</th>
+                                    <th class="p-4">العنوان والموقع</th>
+                                    <th class="p-4 text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tb-clients" class="divide-y text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- النوافذ المنبثقة (Modals) -->
+
+    <!-- نافذة إضافة/تعديل محل -->
+    <div id="m-client" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+            <h3 id="mt-client" class="text-lg font-bold">إضافة محل جديد</h3>
+            <input type="text" id="c-name" placeholder="اسم المحل التجاري" class="w-full border p-3 rounded-xl text-sm">
+            <input type="text" id="c-ph" placeholder="رقم الهاتف" class="w-full border p-3 rounded-xl text-sm">
+            <input type="text" id="c-ad" placeholder="عنوان المحل / الموقع" class="w-full border p-3 rounded-xl text-sm">
+            <div class="flex justify-end gap-2">
+                <button onclick="cm('client')" class="bg-slate-200 px-4 py-2 rounded-xl text-sm font-bold">إلغاء</button>
+                <button onclick="svClient()" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-bold">حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة/تعديل منتج -->
+    <div id="m-product" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+            <h3 id="mt-product" class="text-lg font-bold">إضافة منتوج جديد</h3>
+            <input type="text" id="p-name" placeholder="اسم المنتوج" class="w-full border p-3 rounded-xl text-sm">
+            <div class="flex gap-2">
+                <input type="text" id="p-bc" placeholder="الكود بار (Barcode)" class="w-full border p-3 rounded-xl text-sm">
+                <button onclick="startScanner('product')" class="bg-blue-600 text-white px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap">📷 مسح</button>
+            </div>
+            <input type="number" id="p-sel" placeholder="سعر البيع (DZD)" class="w-full border p-3 rounded-xl text-sm">
+            <div class="flex justify-end gap-2">
+                <button onclick="cm('product')" class="bg-slate-200 px-4 py-2 rounded-xl text-sm font-bold">إلغاء</button>
+                <button onclick="svProduct()" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-bold">حفظ المنتوج</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة كاميرا مسح الباركود -->
+    <div id="m-scanner" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 text-center shadow-xl">
+            <h3 class="font-bold text-slate-700">امسح الكود بار بالكاميرا</h3>
+            <div id="interactive" class="w-full h-64 bg-slate-100 rounded-xl overflow-hidden border"></div>
+            <button onclick="stopScanner()" class="bg-red-600 text-white px-6 py-2 rounded-xl text-sm font-bold">إغلاق الكاميرا</button>
+        </div>
+    </div>
+
+    <!-- النصوص البرمجية وربط السحاب بـ Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+
+        const db = getFirestore(initializeApp({
+            apiKey: "AIzaSyCEfDhz8qD6dRCJ2WJZaZVENPxY0GjCrk",
+            authDomain: "oeufcailleapp.firebaseapp.com",
+            projectId: "oeufcailleapp",
+            storageBucket: "oeufcailleapp.firebasestorage.app",
+            messagingSenderId: "751442781351",
+            appId: "1:751442781351:web:a29eabdcb7526d3fc66782"
+        }));
+
+        let cls = [], prds = [], ords = [];
+        let eCID = null, ePID = null, eOID = null;
+        let html5QrcodeScanner = null;
+        let scanTarget = 'order'; // 'order' or 'product'
+
+        function dt() {
+            const n = new Date();
+            const dateStr = n.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const timeStr = n.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            return `${dateStr} - ${timeStr}`;
+        }
+
+        setInterval(() => {
+            const el = document.getElementById('current-time-display');
+            if (el) el.innerText = dt();
+        }, 1000);
+
+        // الاستماع التلقائي للبيانات السحابية
+        onSnapshot(collection(db, "clients"), s => { cls = s.docs.map(d => ({ id: d.id, ...d.data() })); rCls(); popSel(); });
+        onSnapshot(collection(db, "products"), s => { prds = s.docs.map(d => ({ id: d.id, ...d.data() })); rPrds(); });
+        onSnapshot(collection(db, "orders"), s => { ords = s.docs.map(d => ({ id: d.id, ...d.data() })); rOrds(); });
+
+        // التنقل بين الشاشات
+        window.st = function(id) {
+            document.querySelectorAll('.sec').forEach(el => el.classList.add('hidden'));
+            document.getElementById('v-' + id).classList.remove('hidden');
+            document.querySelectorAll('aside nav button').forEach(b => b.className = "w-full text-right px-4 py-3 rounded-xl font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-2");
+            document.getElementById('nav-' + id).className = "w-full text-right px-4 py-3 rounded-xl font-bold bg-amber-600 text-white flex items-center gap-2";
+            
+            const titles = { 'orders': 'كتابة وصل جديد', 'archive': 'أرشيف الوصولات', 'products': 'إدارة المنتجات', 'clients': 'إدارة المحلات والموردين' };
+            document.getElementById('page-title').innerText = titles[id] || '';
+        };
+
+        // فتح وإغلاق النوافذ
+        window.om = function(n) { document.getElementById('m-' + n).classList.remove('hidden'); document.getElementById('m-' + n).classList.add('flex'); };
+        window.cm = function(n) {
+            document.getElementById('m-' + n).classList.remove('flex'); document.getElementById('m-' + n).classList.add('hidden');
+            if(n==='client') { eCID=null; ['c-name','c-ph','c-ad'].forEach(i=>document.getElementById(i).value=''); }
+            if(n==='product') { ePID=null; ['p-name','p-bc','p-sel'].forEach(i=>document.getElementById(i).value=''); }
+        };
+
+        function popSel() {
+            const oc = document.getElementById('o-client');
+            if(oc) oc.innerHTML = '<option value="">اختر المحل...</option>' + cls.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        }
+
+        // عرض المحلات
+        function rCls() {
+            const tb = document.getElementById('tb-clients');
+            if(tb) tb.innerHTML = cls.map(c => `<tr>
+                <td class="p-4 font-bold text-slate-800">${c.name||''}</td>
+                <td class="p-4 font-mono">${c.ph||''}</td>
+                <td class="p-4">${c.ad||''}</td>
+                <td class="p-4 text-center space-x-2 space-x-reverse">
+                    <button onclick="edCl('${c.id}','${c.name||''}','${c.ph||''}','${c.ad||''}')" class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold">✏️ تعديل</button>
+                    <button onclick="delCl('${c.id}')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold">🗑️ حذف</button>
+                </td>
+            </tr>`).join('');
+        }
+
+        // عرض المنتجات
+        function rPrds() {
+            const tb = document.getElementById('tb-products');
+            if(tb) tb.innerHTML = prds.map(p => `<tr>
+                <td class="p-4 font-bold text-slate-800">${p.name||''}</td>
+                <td class="p-4 font-mono text-xs bg-slate-50 rounded">${p.bc || 'بدون باركود'}</td>
+                <td class="p-4 text-emerald-600 font-bold font-mono">${p.sel||0} DZD</td>
+                <td class="p-4 text-center space-x-2 space-x-reverse">
+                    <button onclick="edPr('${p.id}','${p.name||''}','${p.bc||''}','${p.sel||0}')" class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold">✏️ تعديل</button>
+                    <button onclick="delPr('${p.id}')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold">🗑️ حذف</button>
+                </td>
+            </tr>`).join('');
+        }
+
+        // عرض الأرشيف
+        window.rOrds = function(list = ords) {
+            const tb = document.getElementById('tb-orders');
+            if(tb) tb.innerHTML = [...list].reverse().map(o => `<tr>
+                <td class="p-4 font-mono font-bold text-amber-600">#BL-${o.did||''}</td>
+                <td class="p-4 text-xs font-mono">${o.createdAt||''}</td>
+                <td class="p-4 font-bold">${o.clientName||''}</td>
+                <td class="p-4 text-xs">${(o.items||[]).length} سلع</td>
+                <td class="p-4 text-emerald-600 font-bold">${o.totalPrice||0} DZD</td>
+                <td class="p-4 text-center space-x-2 space-x-reverse">
+                    <button onclick='prn(${JSON.stringify(o)})' class="bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg text-xs font-bold">🖨️ طباعة</button>
+                    <button onclick="edOr('${o.id}')" class="bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg text-xs font-bold">✏️ تعديل</button>
+                    <button onclick="delOr('${o.id}')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold">🗑️ حذف</button>
+                </td>
+            </tr>`).join('');
+        };
+
+        // عمليات المحلات
+        window.svClient = async function() {
+            let name = document.getElementById('c-name').value;
+            if(!name) return alert('يرجى أدخال اسم المحل');
+            let d = { name, ph: document.getElementById('c-ph').value, ad: document.getElementById('c-ad').value };
+            if(eCID) { await updateDoc(doc(db,"clients",eCID),d); eCID=null; } else { await addDoc(collection(db,"clients"),d); }
+            cm('client');
+        };
+        window.edCl = function(id,n,p,a) { eCID=id; om('client'); document.getElementById('mt-client').innerText="تعديل بيانات المحل"; document.getElementById('c-name').value=n; document.getElementById('c-ph').value=p; document.getElementById('c-ad').value=a; };
+        window.delCl = async function(id) { if(confirm('هل انت متأكد من حذف هذا المحل؟')) await deleteDoc(doc(db,"clients",id)); };
+
+        // عمليات المنتجات
+        window.svProduct = async function() {
+            let name = document.getElementById('p-name').value;
+            let bc = document.getElementById('p-bc').value;
+            let sel = Number(document.getElementById('p-sel').value);
+            if(!name) return alert('يرجى إدخال اسم المنتوج');
+            let d = { name, bc, sel };
+            if(ePID) { await updateDoc(doc(db,"products",ePID),d); ePID=null; } else { await addDoc(collection(db,"products"),d); }
+            cm('product');
+        };
+        window.edPr = function(id,n,b,s) { ePID=id; om('product'); document.getElementById('mt-product').innerText="تعديل بيانات المنتج"; document.getElementById('p-name').value=n; document.getElementById('p-bc').value=b; document.getElementById('p-sel').value=s; };
+        window.delPr = async function(id) { if(confirm('هل انت متأكد من حذف هذا المنتج؟')) await deleteDoc(doc(db,"products",id)); };
+
+        // بناء صفوف الوصل
+        window.addRow = function(pName="", qty="", pr="") {
+            let c = document.getElementById('o-rows');
+            if(!c) return;
+            let opts = '<option value="">اختر السلعة...</option>' + prds.map(p=>`<option value="${p.name}" data-price="${p.sel}" ${p.name===pName?'selected':''}>${p.name}</option>`).join('');
+            let r = document.createElement('div');
+            r.className = "flex gap-2 items-center bg-slate-50 p-3 rounded-xl border orow";
+            r.innerHTML = `
+                <select class="border p-2 rounded-lg text-xs flex-1 bg-white osel" onchange="upPr(this)">${opts}</select>
+                <input type="number" placeholder="الكمية" value="${qty||1}" class="border p-2 rounded-lg text-xs w-20 oqty" oninput="calc()">
+                <input type="number" placeholder="السعر" value="${pr}" class="border p-2 rounded-lg text-xs w-28 bg-slate-100 opr" oninput="calc()">
+                <button onclick="this.parentElement.remove();calc();" class="text-red-600 font-bold px-2 text-sm">✕</button>
+            `;
+            c.appendChild(r);
+            calc();
+        };
+
+        window.upPr = function(sel) {
+            let row = sel.closest('.orow');
+            row.querySelector('.opr').value = sel.selectedOptions[0].getAttribute('data-price') || 0;
+            calc();
+        };
+
+        window.calc = function() {
+            let t = 0;
+            document.querySelectorAll('.orow').forEach(r => {
+                t += (Number(r.querySelector('.oqty').value)||0) * (Number(r.querySelector('.opr').value)||0);
+            });
+            if(document.getElementById('o-tot')) document.getElementById('o-tot').innerText = t.toFixed(2) + ' DZD';
+        };
+
+        // تفريغ النموذج
+        window.clearOrderForm = function() {
+            eOID = null;
+            document.getElementById('o-client').value = '';
+            document.getElementById('o-rows').innerHTML = '';
+            calc();
+        };
+
+        // حفظ الوصل
+        window.svOrder = async function(print) {
+            let clientName = document.getElementById('o-client').value;
+            if(!clientName) return alert('يرجى اختيار اسم المحل أولاً!');
+            let items = [];
+            document.querySelectorAll('.orow').forEach(r => {
+                let prod = r.querySelector('.osel').value;
+                let qty = Number(r.querySelector('.oqty').value);
+                let pr = Number(r.querySelector('.opr').value);
+                if(prod && qty>0) items.push({prod,qty,pr});
+            });
+            if(items.length===0) return alert('يرجى إضافة سلعة واحدة على الأقل في الوصل!');
+            let totalPrice = items.reduce((sum,i)=>sum+(i.qty*i.pr),0);
+            let did = eOID ? ords.find(o=>o.id===eOID).did : Math.floor(1000 + Math.random()*9000);
+            let data = { did, clientName, items, totalPrice, createdAt: dt() };
+
+            if(eOID) { 
+                await updateDoc(doc(db,"orders",eOID),data); 
+                eOID=null; 
+            } else { 
+                await addDoc(collection(db,"orders"),data); 
+            }
+
+            clearOrderForm();
+            if(print) prn({did,...data});
+            alert('تم حفظ الوصل ونقله إلى الأرشيف بنجاح!');
+        };
+
+        // تعديل وصل
+        window.edOr = function(id) {
+            let o = ords.find(x=>x.id===id);
+            if(!o) return;
+            eOID = id;
+            st('orders');
+            document.getElementById('o-client').value = o.clientName;
+            document.getElementById('o-rows').innerHTML = '';
+            (o.items||[]).forEach(i=>addRow(i.prod,i.qty,i.pr));
+        };
+
+        // حذف وصل
+        window.delOr = async function(id) { if(confirm('هل انت متأكد من حذف هذا الوصل من الأرشيف؟')) await deleteDoc(doc(db,"orders",id)); };
+
+        // فلترة الأرشيف
+        window.filArchive = function() {
+            let q = document.getElementById('srch-archive').value.toLowerCase();
+            rOrds(ords.filter(o=>(o.createdAt||'').toLowerCase().includes(q)||(o.clientName||'').toLowerCase().includes(q)||(String(o.did)).includes(q)));
+        };
+
+        // طباعة الوصل
+        window.prn = function(o) {
+            let pw = window.open('','_blank','width=800,height=600');
+            pw.document.write(`
+                <html dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>وصل تسليم #${o.did||''}</title>
+                    <style>
+                        body{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; direction: rtl; }
+                        .header{ text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+                        .title{ font-size: 22px; font-weight: bold; color: #1e293b; }
+                        .subtitle{ font-size: 14px; color: #64748b; }
+                        .box{ display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 15px; background: #f8fafc; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; }
+                        table{ width: 100%; border-collapse: collapse; margin-top: 15px; }
+                        th, td{ border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-size: 13px; }
+                        th{ background: #f1f5f9; color: #334155; }
+                        .total{ text-align: left; font-weight: bold; font-size: 18px; margin-top: 20px; color: #047857; }
+                        .footer{ margin-top: 40px; display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="title">وصل تسليم بضاعة (المحلات التجارية)</div>
+                        <div class="subtitle">توزيع السلع والبضائع بالجملة</div>
+                    </div>
+                    <div class="box">
+                        <div>رقم الوصل: #${o.did||''}</div>
+                        <div>التاريخ والوقت: ${o.createdAt||''}</div>
+                        <div>المحل المستلم: ${o.clientName||''}</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>اسم السلعة</th>
+                                <th>الكمية</th>
+                                <th>سعر الوحدة</th>
+                                <th>الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(o.items||[]).map(i=>`
+                                <tr>
+                                    <td><b>${i.prod}</b></td>
+                                    <td>${i.qty}</td>
+                                    <td>${i.pr} DZD</td>
+                                    <td><b>${(i.qty*i.pr).toFixed(2)} DZD</b></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div class="total">المبلغ الإجمالي الكلي: ${(o.totalPrice||0).toFixed(2)} DZD</div>
+                    <div class="footer">
+                        <div>توقيع الموزع: _________________</div>
+                        <div>توقيع وختم المحل: _________________</div>
+                    </div>
+                    <script>window.onload = () => { window.print(); };<\/script>
+                </body>
+                </html>
+            `);
+            pw.document.close();
+        };
+
+        // تشغيل ماسح الباركود للكاميرا
+        window.startScanner = function(target) {
+            scanTarget = target;
+            document.getElementById('m-scanner').classList.remove('hidden');
+            document.getElementById('m-scanner').classList.add('flex');
+            
+            html5QrcodeScanner = new Html5Qrcode("interactive");
+            html5QrcodeScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 150 } },
+                (decodedText) => {
+                    onScanSuccess(decodedText);
+                    stopScanner();
+                },
+                (errorMessage) => {}
+            );
+        };
+
+        window.stopScanner = function() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    document.getElementById('m-scanner').classList.remove('flex');
+                    document.getElementById('m-scanner').classList.add('hidden');
+                });
+            } else {
+                document.getElementById('m-scanner').classList.remove('flex');
+                document.getElementById('m-scanner').classList.add('hidden');
+            }
+        };
+
+        function onScanSuccess(barcode) {
+            if (scanTarget === 'product') {
+                document.getElementById('p-bc').value = barcode;
+            } else if (scanTarget === 'order') {
+                let p = prds.find(x => x.bc === barcode);
+                if (p) {
+                    addRow(p.name, 1, p.sel);
+                } else {
+                    alert(`الباركود (${barcode}) غير مسجل في قائمة المنتجات!`);
+                }
+            }
+        }
+
+        // إدراج الصف الأول عند الفتح
+        addRow();
+    </script>
+</body>
+</html>
