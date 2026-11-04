@@ -197,26 +197,18 @@
         </div>
     </div>
 
-    <!-- كود JavaScript السحابي -->
+    <!-- كود JavaScript السحابي والمباشر -->
     <script>
-   const SUPABASE_URL = 'https://fvsfeysalnnlsbacxnni.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3YM';
+        const SUPABASE_URL = 'https://fvsfeysalnnlsbacxnni.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3YM';
         
-        let dbClient = null;
+        // إنشاء عميل الاتصال مباشرةً
+        const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         let cls = [], prds = [], ords = [];
         let eCID = null, ePID = null, eOID = null;
         let html5QrcodeScanner = null;
         let scanTarget = 'order';
-
-        window.addEventListener('DOMContentLoaded', () => {
-            if (window.supabase) {
-                dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                loadData();
-            } else {
-                console.error('فشل تحميل مكتبة Supabase');
-            }
-            addRow();
-        });
 
         function dt() {
             const n = new Date();
@@ -231,7 +223,6 @@ const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3YM';
         }, 1000);
 
         async function loadData() {
-            if (!dbClient) return;
             await fetchClients();
             await fetchProducts();
             await fetchOrders();
@@ -239,18 +230,37 @@ const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3YM';
 
         async function fetchClients() {
             let { data, error } = await dbClient.from('clients').select('*');
-            if (!error) { cls = data || []; rCls(); popSel(); }
+            if (error) {
+                console.error('خطأ في جلب المحلات:', error);
+            } else {
+                cls = data || [];
+                rCls();
+                popSel();
+            }
         }
 
         async function fetchProducts() {
             let { data, error } = await dbClient.from('products').select('*');
-            if (!error) { prds = data || []; rPrds(); }
+            if (error) {
+                console.error('خطأ في جلب المنتجات:', error);
+            } else {
+                prds = data || [];
+                rPrds();
+            }
         }
 
         async function fetchOrders() {
             let { data, error } = await dbClient.from('orders').select('*');
-            if (!error) { ords = data || []; rOrds(); }
+            if (error) {
+                console.error('خطأ في جلب الوصولات:', error);
+            } else {
+                ords = data || [];
+                rOrds();
+            }
         }
+
+        // جلب البيانات فور تحميل السكربت
+        loadData();
 
         window.st = function(id) {
             document.querySelectorAll('.sec').forEach(el => el.classList.add('hidden'));
@@ -339,13 +349,21 @@ const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3YM';
             let name = document.getElementById('c-name').value;
             if(!name) return alert('يرجى إدخال اسم المحل');
             let d = { name, ph: document.getElementById('c-ph').value, ad: document.getElementById('c-ad').value };
+            
+            let res;
             if(eCID) {
-                await dbClient.from('clients').update(d).eq('id', eCID);
+                res = await dbClient.from('clients').update(d).eq('id', eCID);
             } else {
-                await dbClient.from('clients').insert([d]);
+                res = await dbClient.from('clients').insert([d]);
             }
-            cm('client');
-            fetchClients();
+
+            if(res.error) {
+                alert('حدث خطأ أثناء الحفظ: ' + res.error.message);
+            } else {
+                cm('client');
+                await fetchClients();
+                alert('تم حفظ المحل بنجاح!');
+            }
         };
 
         window.edCl = function(id, n, p, a) {
@@ -359,8 +377,9 @@ const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3YM';
 
         window.delCl = async function(id) {
             if(confirm('هل أنت متأكد من حذف هذا المحل؟')) {
-                await dbClient.from('clients').delete().eq('id', id);
-                fetchClients();
+                let { error } = await dbClient.from('clients').delete().eq('id', id);
+                if(error) alert('فشل الحذف: ' + error.message);
+                else fetchClients();
             }
         };
 
@@ -370,13 +389,21 @@ const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3YM';
             let sel = Number(document.getElementById('p-sel').value);
             if(!name) return alert('يرجى إدخال اسم المنتوج');
             let d = { name, bc, sel };
+
+            let res;
             if(ePID) {
-                await dbClient.from('products').update(d).eq('id', ePID);
+                res = await dbClient.from('products').update(d).eq('id', ePID);
             } else {
-                await dbClient.from('products').insert([d]);
+                res = await dbClient.from('products').insert([d]);
             }
-            cm('product');
-            fetchProducts();
+
+            if(res.error) {
+                alert('حدث خطأ أثناء الحفظ: ' + res.error.message);
+            } else {
+                cm('product');
+                await fetchProducts();
+                alert('تم حفظ المنتج بنجاح!');
+            }
         };
 
         window.edPr = function(id, n, b, s) {
@@ -390,8 +417,9 @@ const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3YM';
 
         window.delPr = async function(id) {
             if(confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-                await dbClient.from('products').delete().eq('id', id);
-                fetchProducts();
+                let { error } = await dbClient.from('products').delete().eq('id', id);
+                if(error) alert('فشل الحذف: ' + error.message);
+                else fetchProducts();
             }
         };
 
@@ -455,17 +483,22 @@ const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3YM';
             let did = eOID ? ords.find(o => o.id === eOID).did : Math.floor(1000 + Math.random() * 9000);
             let data = { did, client_name: clientName, items, total_price: totalPrice, created_at: dt() };
 
+            let res;
             if(eOID) {
-                await dbClient.from('orders').update(data).eq('id', eOID);
+                res = await dbClient.from('orders').update(data).eq('id', eOID);
                 eOID = null;
             } else {
-                await dbClient.from('orders').insert([data]);
+                res = await dbClient.from('orders').insert([data]);
             }
 
-            clearOrderForm();
-            if(print) prn({ did, clientName, items, totalPrice, created_at: data.created_at });
-            fetchOrders();
-            alert('تم حفظ الوصل ونقله إلى الأرشيف بنجاح!');
+            if(res.error) {
+                alert('حدث خطأ أثناء حفظ الوصل: ' + res.error.message);
+            } else {
+                clearOrderForm();
+                if(print) prn({ did, clientName, items, totalPrice, created_at: data.created_at });
+                await fetchOrders();
+                alert('تم حفظ الوصل بنجاح!');
+            }
         };
 
         window.edOr = function(id) {
@@ -481,8 +514,9 @@ const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3YM';
 
         window.delOr = async function(id) {
             if(confirm('هل أنت متأكد من حذف هذا الوصل من الأرشيف؟')) {
-                await dbClient.from('orders').delete().eq('id', id);
-                fetchOrders();
+                let { error } = await dbClient.from('orders').delete().eq('id', id);
+                if(error) alert('فشل الحذف: ' + error.message);
+                else fetchOrders();
             }
         };
 
@@ -597,6 +631,8 @@ const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3YM';
                 }
             }
         }
+
+        addRow();
     </script>
 </body>
 </html>
