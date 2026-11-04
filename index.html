@@ -197,12 +197,12 @@
         </div>
     </div>
 
-    <!-- سكربت الاتصال بقاعدة بيانات Supabase -->
+    <!-- سكربت الاتصال بقاعدة بيانات Supabase المحدث -->
     <script>
         const SUPABASE_URL = 'https://fvsfeysalnnlsbacxnni.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3...'; // قم بتثبيت مفتاحك الكامل هنا
+        const SUPABASE_ANON_KEY = 'sb_publishable_WxC03Du5WrdtwW1nx_4Tbg_5swqP3...'; // ضع مفتاحك الكامل هنا
         
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let cls = [], prds = [], ords = [];
         let eCID = null, ePID = null, eOID = null;
@@ -228,21 +228,21 @@
         }
 
         async function fetchClients() {
-            let { data, error } = await supabase.from('clients').select('*');
+            let { data, error } = await dbClient.from('clients').select('*');
             if (!error) { cls = data || []; rCls(); popSel(); }
         }
 
         async function fetchProducts() {
-            let { data, error } = await supabase.from('products').select('*');
+            let { data, error } = await dbClient.from('products').select('*');
             if (!error) { prds = data || []; rPrds(); }
         }
 
         async function fetchOrders() {
-            let { data, error } = await supabase.from('orders').select('*');
+            let { data, error } = await dbClient.from('orders').select('*');
             if (!error) { ords = data || []; rOrds(); }
         }
 
-        supabase.channel('public-db')
+        dbClient.channel('public-db')
             .on('postgres_changes', { event: '*', schema: 'public' }, payload => {
                 loadData();
             })
@@ -319,10 +319,10 @@
             if(!name) return alert('يرجى أدخال اسم المحل');
             let d = { name, ph: document.getElementById('c-ph').value, ad: document.getElementById('c-ad').value };
             if(eCID) {
-                await supabase.from('clients').update(d).eq('id', eCID);
+                await dbClient.from('clients').update(d).eq('id', eCID);
                 eCID = null;
             } else {
-                await supabase.from('clients').insert([d]);
+                await dbClient.from('clients').insert([d]);
             }
             cm('client');
             fetchClients();
@@ -330,7 +330,7 @@
         window.edCl = function(id,n,p,a) { eCID=id; om('client'); document.getElementById('mt-client').innerText="تعديل بيانات المحل"; document.getElementById('c-name').value=n; document.getElementById('c-ph').value=p; document.getElementById('c-ad').value=a; };
         window.delCl = async function(id) { 
             if(confirm('هل انت متأكد من حذف هذا المحل؟')) {
-                await supabase.from('clients').delete().eq('id', id);
+                await dbClient.from('clients').delete().eq('id', id);
                 fetchClients();
             } 
         };
@@ -342,10 +342,10 @@
             if(!name) return alert('يرجى إدخال اسم المنتوج');
             let d = { name, bc, sel };
             if(ePID) {
-                await supabase.from('products').update(d).eq('id', ePID);
+                await dbClient.from('products').update(d).eq('id', ePID);
                 ePID = null;
             } else {
-                await supabase.from('products').insert([d]);
+                await dbClient.from('products').insert([d]);
             }
             cm('product');
             fetchProducts();
@@ -353,7 +353,7 @@
         window.edPr = function(id,n,b,s) { ePID=id; om('product'); document.getElementById('mt-product').innerText="تعديل بيانات المنتج"; document.getElementById('p-name').value=n; document.getElementById('p-bc').value=b; document.getElementById('p-sel').value=s; };
         window.delPr = async function(id) { 
             if(confirm('هل انت متأكد من حذف هذا المنتج؟')) {
-                await supabase.from('products').delete().eq('id', id);
+                await dbClient.from('products').delete().eq('id', id);
                 fetchProducts();
             } 
         };
@@ -411,10 +411,10 @@
             let data = { did, client_name: clientName, items, total_price: totalPrice, created_at: dt() };
 
             if(eOID) { 
-                await supabase.from('orders').update(data).eq('id', eOID);
+                await dbClient.from('orders').update(data).eq('id', eOID);
                 eOID=null; 
             } else { 
-                await supabase.from('orders').insert([data]);
+                await dbClient.from('orders').insert([data]);
             }
 
             clearOrderForm();
@@ -435,7 +435,7 @@
 
         window.delOr = async function(id) { 
             if(confirm('هل انت متأكد من حذف هذا الوصل من الأرشيف؟')) {
-                await supabase.from('orders').delete().eq('id', id);
+                await dbClient.from('orders').delete().eq('id', id);
                 fetchOrders();
             } 
         };
