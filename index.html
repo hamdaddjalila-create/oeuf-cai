@@ -13,143 +13,149 @@
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800">
-    <div class="flex h-screen overflow-hidden">
-        <!-- القائمة الجانبية -->
-        <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between p-4">
-            <div class="space-y-6">
-                <div class="flex items-center gap-3 px-2">
-                    <span class="text-3xl">🏬</span>
-                    <div>
-                        <h1 class="font-bold text-amber-400 text-sm">توزيع البضائع Pro</h1>
-                        <p class="text-[10px] text-slate-400">نظام Supabase السحابي</p>
+    <div class="flex flex-col md:flex-row min-h-screen">
+        
+        <!-- القائمة الجانبية (متجاوبة: أعلى الصفحة في الهاتف، وعلى اليمين في الحاسوب) -->
+        <aside class="w-full md:w-64 bg-slate-900 text-white flex flex-col justify-between p-4 sticky top-0 z-40 shadow-md">
+            <div class="space-y-4 md:space-y-6">
+                <div class="flex items-center justify-between md:justify-start gap-3 px-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl md:text-3xl">🏬</span>
+                        <div>
+                            <h1 class="font-bold text-amber-400 text-xs md:text-sm">توزيع البضائع Pro</h1>
+                            <p class="text-[9px] md:text-[10px] text-slate-400">نظام Supabase السحابي</p>
+                        </div>
                     </div>
+                    <span class="md:hidden text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">سحابي ☁️</span>
                 </div>
-                <nav class="space-y-2">
-                    <button type="button" onclick="st('orders')" id="nav-orders" class="w-full text-right px-4 py-3 rounded-xl font-bold bg-amber-600 text-white flex items-center gap-2">🛒 <span>كتابة وصل جديد</span></button>
-                    <button type="button" onclick="st('archive')" id="nav-archive" class="w-full text-right px-4 py-3 rounded-xl font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-2">📂 <span>أرشيف الوصولات</span></button>
-                    <button type="button" onclick="st('products')" id="nav-products" class="w-full text-right px-4 py-3 rounded-xl font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-2">🏷️ <span>إدارة المنتجات</span></button>
-                    <button type="button" onclick="st('clients')" id="nav-clients" class="w-full text-right px-4 py-3 rounded-xl font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-2">🏪 <span>المحلات والموردين</span></button>
+                
+                <!-- أزرار التنقل (أفقية للتمرير في الهاتف، وعمودية في الحاسوب) -->
+                <nav class="flex md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+                    <button type="button" onclick="st('orders')" id="nav-orders" class="whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm bg-amber-600 text-white flex items-center gap-2 flex-shrink-0">🛒 <span>وصل جديد</span></button>
+                    <button type="button" onclick="st('archive')" id="nav-archive" class="whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm text-slate-300 hover:bg-slate-800 flex items-center gap-2 flex-shrink-0">📂 <span>الأرشيف</span></button>
+                    <button type="button" onclick="st('products')" id="nav-products" class="whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm text-slate-300 hover:bg-slate-800 flex items-center gap-2 flex-shrink-0">🏷️ <span>المنتجات</span></button>
+                    <button type="button" onclick="st('clients')" id="nav-clients" class="whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm text-slate-300 hover:bg-slate-800 flex items-center gap-2 flex-shrink-0">🏪 <span>المحلات</span></button>
                 </nav>
             </div>
-            <div class="text-xs text-slate-500 text-center border-t border-slate-800 pt-3">قاعدة بيانات PostgreSQL</div>
+            <div class="hidden md:block text-xs text-slate-500 text-center border-t border-slate-800 pt-3">قاعدة بيانات PostgreSQL</div>
         </aside>
 
         <!-- المحتوى الرئيسي -->
-        <div class="flex-1 flex flex-col overflow-y-auto">
-            <header class="bg-white shadow-sm border-b h-16 flex items-center justify-between px-6">
-                <h2 id="page-title" class="text-lg font-bold text-slate-700">كتابة وصل جديد</h2>
-                <div id="scanner-status" class="text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full hidden">📷 الماسح جاهز</div>
+        <div class="flex-1 flex flex-col min-w-0">
+            <header class="bg-white shadow-sm border-b h-14 md:h-16 flex items-center justify-between px-4 md:px-6">
+                <h2 id="page-title" class="text-base md:text-lg font-bold text-slate-700">كتابة وصل جديد</h2>
+                <div id="scanner-status" class="text-[10px] md:text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full hidden">📷 الماسح جاهز</div>
             </header>
 
-            <main class="p-6 space-y-6">
+            <main class="p-3 md:p-6 space-y-4 md:space-y-6">
                 <!-- 1. قسم كتابة الوصل -->
-                <div id="v-orders" class="sec space-y-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div id="v-orders" class="sec space-y-4">
+                    <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-bold text-slate-600 mb-1">اسم المحل التجاري المستهدف:</label>
-                                <select id="o-client" class="w-full border p-3 rounded-xl text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-amber-500">
+                                <select id="o-client" class="w-full border p-2.5 md:p-3 rounded-xl text-xs md:text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-amber-500">
                                     <option value="">اختر المحل...</option>
                                 </select>
                             </div>
-                            <div class="flex items-end gap-2">
-                                <button type="button" onclick="startScanner('order')" class="bg-blue-600 text-white px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-blue-700">
+                            <div class="flex items-end">
+                                <button type="button" onclick="startScanner('order')" class="w-full md:w-auto bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex items-center justify-center gap-2 hover:bg-blue-700">
                                     📷 مسح باركود سلعة
                                 </button>
                             </div>
                         </div>
 
                         <!-- جدول السلع داخل الوصل -->
-                        <div class="border-t border-b py-4 space-y-3">
+                        <div class="border-t border-b py-3 space-y-3">
                             <div class="flex justify-between items-center">
-                                <span class="font-bold text-sm">تفاصيل السلع في الوصل:</span>
-                                <button type="button" onclick="addRow()" class="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ إضافة سلعة أخرى</button>
+                                <span class="font-bold text-xs md:text-sm">تفاصيل السلع في الوصل:</span>
+                                <button type="button" onclick="addRow()" class="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ إضافة سلعة</button>
                             </div>
                             <div id="o-rows" class="space-y-2"></div>
                         </div>
 
                         <!-- إجمالي الوصل والتاريخ -->
-                        <div class="flex justify-between items-center bg-amber-50 p-4 rounded-xl border border-amber-200">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-amber-50 p-3 md:p-4 rounded-xl border border-amber-200">
                             <div>
-                                <span class="text-xs text-amber-800 font-bold block">التاريخ والوقت الحالي:</span>
+                                <span class="text-[10px] md:text-xs text-amber-800 font-bold block">التاريخ والوقت:</span>
                                 <span id="current-time-display" class="text-xs font-mono text-slate-600">--/--/---- --:--</span>
                             </div>
-                            <div class="text-left">
-                                <span class="text-xs text-slate-500 block">الإجمالي الكلي:</span>
-                                <span id="o-tot" class="text-2xl font-bold text-amber-700">0.00 DZD</span>
+                            <div class="text-right sm:text-left w-full sm:w-auto border-t sm:border-0 pt-2 sm:pt-0">
+                                <span class="text-[10px] md:text-xs text-slate-500 block">الإجمالي الكلي:</span>
+                                <span id="o-tot" class="text-xl md:text-2xl font-bold text-amber-700">0.00 DZD</span>
                             </div>
                         </div>
 
                         <!-- أزرار حفظ وإلغاء وطباعة الوصل -->
-                        <div class="flex justify-end gap-3 pt-2">
-                            <button type="button" onclick="clearOrderForm()" class="bg-slate-200 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-bold">إلغاء / تفريغ</button>
-                            <button type="button" onclick="svOrder(false)" class="bg-amber-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-amber-700">💾 حفظ الوصل للأرشيف</button>
-                            <button type="button" onclick="svOrder(true)" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-700">🖨️ حفظ وطباعة الوصل</button>
+                        <div class="flex flex-col sm:flex-row justify-end gap-2 pt-2">
+                            <button type="button" onclick="clearOrderForm()" class="w-full sm:w-auto bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold">إلغاء</button>
+                            <button type="button" onclick="svOrder(false)" class="w-full sm:w-auto bg-amber-600 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-amber-700">💾 حفظ الوصل</button>
+                            <button type="button" onclick="svOrder(true)" class="w-full sm:w-auto bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-emerald-700">🖨️ حفظ وطباعة</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- 2. أرشيف الوصولات -->
                 <div id="v-archive" class="sec space-y-4 hidden">
-                    <div class="flex justify-between items-center flex-wrap gap-3">
-                        <h3 class="text-xl font-bold">أرشيف الوصولات المحفوظة</h3>
-                        <input type="text" id="srch-archive" oninput="filArchive()" placeholder="بحث باسم المحل أو رقم الوصل..." class="border px-4 py-2 rounded-xl text-sm outline-none bg-white w-64">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <h3 class="text-lg md:text-xl font-bold">أرشيف الوصولات</h3>
+                        <input type="text" id="srch-archive" oninput="filArchive()" placeholder="بحث باسم المحل أو الرقم..." class="w-full sm:w-64 border px-3 py-2 rounded-xl text-xs md:text-sm outline-none bg-white">
                     </div>
                     <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
-                        <table class="w-full text-right border-collapse">
+                        <table class="w-full text-right border-collapse min-w-[600px]">
                             <thead>
                                 <tr class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
-                                    <th class="p-4">رقم الوصل</th>
-                                    <th class="p-4">التاريخ والوقت</th>
-                                    <th class="p-4">المحل</th>
-                                    <th class="p-4">عدد السلع</th>
-                                    <th class="p-4">الإجمالي</th>
-                                    <th class="p-4 text-center">الإجراءات (تعديل / حذف / طباعة)</th>
+                                    <th class="p-3">رقم الوصل</th>
+                                    <th class="p-3">التاريخ والوقت</th>
+                                    <th class="p-3">المحل</th>
+                                    <th class="p-3">السلع</th>
+                                    <th class="p-3">الإجمالي</th>
+                                    <th class="p-3 text-center">الإجراءات</th>
                                 </tr>
                             </thead>
-                            <tbody id="tb-orders" class="divide-y text-sm"></tbody>
+                            <tbody id="tb-orders" class="divide-y text-xs md:text-sm"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- 3. إدارة المنتجات والأسعار -->
+                <!-- 3. إدارة المنتجات -->
                 <div id="v-products" class="sec space-y-4 hidden">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-xl font-bold">إدارة المنتجات والأسعار</h3>
-                        <button type="button" onclick="om('product')" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-bold">+ إضافة منتج جديد</button>
+                        <h3 class="text-lg md:text-xl font-bold">المنتجات والأسعار</h3>
+                        <button type="button" onclick="om('product')" class="bg-amber-600 text-white px-3 py-2 rounded-xl text-xs md:text-sm font-bold">+ منتج جديد</button>
                     </div>
                     <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
-                        <table class="w-full text-right border-collapse">
+                        <table class="w-full text-right border-collapse min-w-[500px]">
                             <thead>
                                 <tr class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
-                                    <th class="p-4">اسم المنتوج</th>
-                                    <th class="p-4">الكود بار (Barcode)</th>
-                                    <th class="p-4">سعر البيع</th>
-                                    <th class="p-4 text-center">الإجراءات</th>
+                                    <th class="p-3">اسم المنتوج</th>
+                                    <th class="p-3">الباركود</th>
+                                    <th class="p-3">السعر</th>
+                                    <th class="p-3 text-center">الإجراءات</th>
                                 </tr>
                             </thead>
-                            <tbody id="tb-products" class="divide-y text-sm"></tbody>
+                            <tbody id="tb-products" class="divide-y text-xs md:text-sm"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- 4. إدارة المحلات والموردين -->
+                <!-- 4. إدارة المحلات -->
                 <div id="v-clients" class="sec space-y-4 hidden">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-xl font-bold">إدارة المحلات والموردين</h3>
-                        <button type="button" onclick="om('client')" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-bold">+ إضافة محل / مورد جديد</button>
+                        <h3 class="text-lg md:text-xl font-bold">المحلات والموردين</h3>
+                        <button type="button" onclick="om('client')" class="bg-amber-600 text-white px-3 py-2 rounded-xl text-xs md:text-sm font-bold">+ محل جديد</button>
                     </div>
                     <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
-                        <table class="w-full text-right border-collapse">
+                        <table class="w-full text-right border-collapse min-w-[500px]">
                             <thead>
                                 <tr class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
-                                    <th class="p-4">اسم المحل / المورد</th>
-                                    <th class="p-4">رقم الهاتف</th>
-                                    <th class="p-4">العنوان والموقع</th>
-                                    <th class="p-4 text-center">الإجراءات</th>
+                                    <th class="p-3">المحل / المورد</th>
+                                    <th class="p-3">الهاتف</th>
+                                    <th class="p-3">العنوان</th>
+                                    <th class="p-3 text-center">الإجراءات</th>
                                 </tr>
                             </thead>
-                            <tbody id="tb-clients" class="divide-y text-sm"></tbody>
+                            <tbody id="tb-clients" class="divide-y text-xs md:text-sm"></tbody>
                         </table>
                     </div>
                 </div>
@@ -157,51 +163,50 @@
         </div>
     </div>
 
-    <!-- نافذة إضافة/تعديل محل -->
+    <!-- نافذة محل جديد -->
     <div id="m-client" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
-            <h3 id="mt-client" class="text-lg font-bold">إضافة محل جديد</h3>
-            <input type="text" id="c-name" placeholder="اسم المحل التجاري" class="w-full border p-3 rounded-xl text-sm">
-            <input type="text" id="c-ph" placeholder="رقم الهاتف" class="w-full border p-3 rounded-xl text-sm">
-            <input type="text" id="c-ad" placeholder="عنوان المحل / الموقع" class="w-full border p-3 rounded-xl text-sm">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl">
+            <h3 id="mt-client" class="text-base font-bold">إضافة محل جديد</h3>
+            <input type="text" id="c-name" placeholder="اسم المحل التجاري" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
+            <input type="text" id="c-ph" placeholder="رقم الهاتف" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
+            <input type="text" id="c-ad" placeholder="عنوان المحل / الموقع" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
             <div class="flex justify-end gap-2">
-                <button type="button" onclick="cm('client')" class="bg-slate-200 px-4 py-2 rounded-xl text-sm font-bold">إلغاء</button>
-                <button type="button" onclick="svClient()" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-bold">حفظ</button>
+                <button type="button" onclick="cm('client')" class="bg-slate-200 px-4 py-2 rounded-xl text-xs md:text-sm font-bold">إلغاء</button>
+                <button type="button" onclick="svClient()" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs md:text-sm font-bold">حفظ</button>
             </div>
         </div>
     </div>
 
-    <!-- نافذة إضافة/تعديل منتج -->
+    <!-- نافذة منتج جديد -->
     <div id="m-product" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
-            <h3 id="mt-product" class="text-lg font-bold">إضافة منتوج جديد</h3>
-            <input type="text" id="p-name" placeholder="اسم المنتوج" class="w-full border p-3 rounded-xl text-sm">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl">
+            <h3 id="mt-product" class="text-base font-bold">إضافة منتوج جديد</h3>
+            <input type="text" id="p-name" placeholder="اسم المنتوج" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
             <div class="flex gap-2">
-                <input type="text" id="p-bc" placeholder="الكود بار (Barcode)" class="w-full border p-3 rounded-xl text-sm">
+                <input type="text" id="p-bc" placeholder="الكود بار (Barcode)" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
                 <button type="button" onclick="startScanner('product')" class="bg-blue-600 text-white px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap">📷 مسح</button>
             </div>
-            <input type="number" id="p-sel" placeholder="سعر البيع (DZD)" class="w-full border p-3 rounded-xl text-sm">
+            <input type="number" id="p-sel" placeholder="سعر البيع (DZD)" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
             <div class="flex justify-end gap-2">
-                <button type="button" onclick="cm('product')" class="bg-slate-200 px-4 py-2 rounded-xl text-sm font-bold">إلغاء</button>
-                <button type="button" onclick="svProduct()" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-bold">حفظ المنتوج</button>
+                <button type="button" onclick="cm('product')" class="bg-slate-200 px-4 py-2 rounded-xl text-xs md:text-sm font-bold">إلغاء</button>
+                <button type="button" onclick="svProduct()" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs md:text-sm font-bold">حفظ المنتوج</button>
             </div>
         </div>
     </div>
 
-    <!-- نافذة كاميرا مسح الباركود -->
+    <!-- نافذة الكاميرا -->
     <div id="m-scanner" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 text-center shadow-xl">
-            <h3 class="font-bold text-slate-700">امسح الكود بار بالكاميرا</h3>
-            <div id="interactive" class="w-full h-64 bg-slate-100 rounded-xl overflow-hidden border"></div>
-            <button type="button" onclick="stopScanner()" class="bg-red-600 text-white px-6 py-2 rounded-xl text-sm font-bold">إغلاق الكاميرا</button>
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 text-center shadow-xl">
+            <h3 class="font-bold text-sm text-slate-700">امسح الكود بار بالكاميرا</h3>
+            <div id="interactive" class="w-full h-56 bg-slate-100 rounded-xl overflow-hidden border"></div>
+            <button type="button" onclick="stopScanner()" class="bg-red-600 text-white px-6 py-2 rounded-xl text-xs font-bold">إغلاق الكاميرا</button>
         </div>
     </div>
 
-    <!-- كود JavaScript السحابي والمباشر -->
     <script>
-  const SUPABASE_URL = 'https://fvsfeysalnnlsbacxnni.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2c2ZleXNhbG5ubHNiYWN4bm5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4MTMxMDEsImV4cCI6MjEwOTM4OTEwMX0.VzKEBVyMbbTwIIsrFkBYCCbj2eN9MTRx6M1wEMCWFTE';
-        // إنشاء عميل الاتصال مباشرةً
+        const SUPABASE_URL = 'https://fvsfeysalnnlsbacxnni.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2c2ZleXNhbG5ubHNiYWN4bm5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4MTMxMDEsImV4cCI6MjEwOTM4OTEwMX0.VzKEBVyMbbTwIIsrFkBYCCbj2eN9MTRx6M1wEMCWFTE';
+        
         const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let cls = [], prds = [], ords = [];
@@ -212,7 +217,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         function dt() {
             const n = new Date();
             const dateStr = n.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
-            const timeStr = n.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const timeStr = n.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
             return `${dateStr} - ${timeStr}`;
         }
 
@@ -229,36 +234,19 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
         async function fetchClients() {
             let { data, error } = await dbClient.from('clients').select('*');
-            if (error) {
-                console.error('خطأ في جلب المحلات:', error);
-            } else {
-                cls = data || [];
-                rCls();
-                popSel();
-            }
+            if (!error) { cls = data || []; rCls(); popSel(); }
         }
 
         async function fetchProducts() {
             let { data, error } = await dbClient.from('products').select('*');
-            if (error) {
-                console.error('خطأ في جلب المنتجات:', error);
-            } else {
-                prds = data || [];
-                rPrds();
-            }
+            if (!error) { prds = data || []; rPrds(); }
         }
 
         async function fetchOrders() {
             let { data, error } = await dbClient.from('orders').select('*');
-            if (error) {
-                console.error('خطأ في جلب الوصولات:', error);
-            } else {
-                ords = data || [];
-                rOrds();
-            }
+            if (!error) { ords = data || []; rOrds(); }
         }
 
-        // جلب البيانات فور تحميل السكربت
         loadData();
 
         window.st = function(id) {
@@ -267,10 +255,10 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             if (targetSec) targetSec.classList.remove('hidden');
 
             document.querySelectorAll('aside nav button').forEach(b => {
-                b.className = "w-full text-right px-4 py-3 rounded-xl font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-2";
+                b.className = "whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm text-slate-300 hover:bg-slate-800 flex items-center gap-2 flex-shrink-0";
             });
             const activeNav = document.getElementById('nav-' + id);
-            if (activeNav) activeNav.className = "w-full text-right px-4 py-3 rounded-xl font-bold bg-amber-600 text-white flex items-center gap-2";
+            if (activeNav) activeNav.className = "whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm bg-amber-600 text-white flex items-center gap-2 flex-shrink-0";
             
             const titles = { 'orders': 'كتابة وصل جديد', 'archive': 'أرشيف الوصولات', 'products': 'إدارة المنتجات', 'clients': 'إدارة المحلات والموردين' };
             const pageTitle = document.getElementById('page-title');
@@ -305,12 +293,12 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         function rCls() {
             const tb = document.getElementById('tb-clients');
             if(tb) tb.innerHTML = cls.map(c => `<tr>
-                <td class="p-4 font-bold text-slate-800">${c.name||''}</td>
-                <td class="p-4 font-mono">${c.ph||''}</td>
-                <td class="p-4">${c.ad||''}</td>
-                <td class="p-4 text-center space-x-2 space-x-reverse">
-                    <button type="button" onclick="edCl(${c.id}, '${c.name||''}', '${c.ph||''}', '${c.ad||''}')" class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold">✏️ تعديل</button>
-                    <button type="button" onclick="delCl(${c.id})" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold">🗑️ حذف</button>
+                <td class="p-3 font-bold text-slate-800">${c.name||''}</td>
+                <td class="p-3 font-mono text-xs">${c.ph||''}</td>
+                <td class="p-3">${c.ad||''}</td>
+                <td class="p-3 text-center space-x-1 space-x-reverse whitespace-nowrap">
+                    <button type="button" onclick="edCl(${c.id}, '${c.name||''}', '${c.ph||''}', '${c.ad||''}')" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs font-bold">✏️</button>
+                    <button type="button" onclick="delCl(${c.id})" class="bg-red-50 text-red-600 px-2 py-1 rounded text-xs font-bold">🗑️</button>
                 </td>
             </tr>`).join('');
         }
@@ -318,12 +306,12 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         function rPrds() {
             const tb = document.getElementById('tb-products');
             if(tb) tb.innerHTML = prds.map(p => `<tr>
-                <td class="p-4 font-bold text-slate-800">${p.name||''}</td>
-                <td class="p-4 font-mono text-xs bg-slate-50 rounded">${p.bc || 'بدون باركود'}</td>
-                <td class="p-4 text-emerald-600 font-bold font-mono">${p.sel||0} DZD</td>
-                <td class="p-4 text-center space-x-2 space-x-reverse">
-                    <button type="button" onclick="edPr(${p.id}, '${p.name||''}', '${p.bc||''}', ${p.sel||0})" class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold">✏️ تعديل</button>
-                    <button type="button" onclick="delPr(${p.id})" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold">🗑️ حذف</button>
+                <td class="p-3 font-bold text-slate-800">${p.name||''}</td>
+                <td class="p-3 font-mono text-xs bg-slate-50 rounded">${p.bc || 'بدون باركود'}</td>
+                <td class="p-3 text-emerald-600 font-bold font-mono">${p.sel||0} DZD</td>
+                <td class="p-3 text-center space-x-1 space-x-reverse whitespace-nowrap">
+                    <button type="button" onclick="edPr(${p.id}, '${p.name||''}', '${p.bc||''}', ${p.sel||0})" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs font-bold">✏️</button>
+                    <button type="button" onclick="delPr(${p.id})" class="bg-red-50 text-red-600 px-2 py-1 rounded text-xs font-bold">🗑️</button>
                 </td>
             </tr>`).join('');
         }
@@ -331,15 +319,15 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         window.rOrds = function(list = ords) {
             const tb = document.getElementById('tb-orders');
             if(tb) tb.innerHTML = [...list].reverse().map(o => `<tr>
-                <td class="p-4 font-mono font-bold text-amber-600">#BL-${o.did||''}</td>
-                <td class="p-4 text-xs font-mono">${o.created_at||''}</td>
-                <td class="p-4 font-bold">${o.client_name||''}</td>
-                <td class="p-4 text-xs">${(o.items||[]).length} سلع</td>
-                <td class="p-4 text-emerald-600 font-bold">${o.total_price||0} DZD</td>
-                <td class="p-4 text-center space-x-2 space-x-reverse">
-                    <button type="button" onclick='prn(${JSON.stringify(o)})' class="bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg text-xs font-bold">🖨️ طباعة</button>
-                    <button type="button" onclick="edOr(${o.id})" class="bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg text-xs font-bold">✏️ تعديل</button>
-                    <button type="button" onclick="delOr(${o.id})" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold">🗑️ حذف</button>
+                <td class="p-3 font-mono font-bold text-amber-600">#BL-${o.did||''}</td>
+                <td class="p-3 text-xs font-mono whitespace-nowrap">${o.created_at||''}</td>
+                <td class="p-3 font-bold">${o.client_name||''}</td>
+                <td class="p-3 text-xs">${(o.items||[]).length} سلع</td>
+                <td class="p-3 text-emerald-600 font-bold whitespace-nowrap">${o.total_price||0} DZD</td>
+                <td class="p-3 text-center space-x-1 space-x-reverse whitespace-nowrap">
+                    <button type="button" onclick='prn(${JSON.stringify(o)})' class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-xs font-bold">🖨️</button>
+                    <button type="button" onclick="edOr(${o.id})" class="bg-amber-50 text-amber-600 px-2 py-1 rounded text-xs font-bold">✏️</button>
+                    <button type="button" onclick="delOr(${o.id})" class="bg-red-50 text-red-600 px-2 py-1 rounded text-xs font-bold">🗑️</button>
                 </td>
             </tr>`).join('');
         };
@@ -348,26 +336,13 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             let name = document.getElementById('c-name').value;
             if(!name) return alert('يرجى إدخال اسم المحل');
             let d = { name, ph: document.getElementById('c-ph').value, ad: document.getElementById('c-ad').value };
-            
-            let res;
-            if(eCID) {
-                res = await dbClient.from('clients').update(d).eq('id', eCID);
-            } else {
-                res = await dbClient.from('clients').insert([d]);
-            }
-
-            if(res.error) {
-                alert('حدث خطأ أثناء الحفظ: ' + res.error.message);
-            } else {
-                cm('client');
-                await fetchClients();
-                alert('تم حفظ المحل بنجاح!');
-            }
+            let res = eCID ? await dbClient.from('clients').update(d).eq('id', eCID) : await dbClient.from('clients').insert([d]);
+            if(res.error) alert('حدث خطأ: ' + res.error.message);
+            else { cm('client'); await fetchClients(); alert('تم الحفظ بنجاح!'); }
         };
 
         window.edCl = function(id, n, p, a) {
-            eCID = id;
-            om('client');
+            eCID = id; om('client');
             document.getElementById('mt-client').innerText = "تعديل بيانات المحل";
             document.getElementById('c-name').value = n;
             document.getElementById('c-ph').value = p;
@@ -375,7 +350,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         };
 
         window.delCl = async function(id) {
-            if(confirm('هل أنت متأكد من حذف هذا المحل؟')) {
+            if(confirm('هل أنت متأكد من الحذف؟')) {
                 let { error } = await dbClient.from('clients').delete().eq('id', id);
                 if(error) alert('فشل الحذف: ' + error.message);
                 else fetchClients();
@@ -388,34 +363,21 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             let sel = Number(document.getElementById('p-sel').value);
             if(!name) return alert('يرجى إدخال اسم المنتوج');
             let d = { name, bc, sel };
-
-            let res;
-            if(ePID) {
-                res = await dbClient.from('products').update(d).eq('id', ePID);
-            } else {
-                res = await dbClient.from('products').insert([d]);
-            }
-
-            if(res.error) {
-                alert('حدث خطأ أثناء الحفظ: ' + res.error.message);
-            } else {
-                cm('product');
-                await fetchProducts();
-                alert('تم حفظ المنتج بنجاح!');
-            }
+            let res = ePID ? await dbClient.from('products').update(d).eq('id', ePID) : await dbClient.from('products').insert([d]);
+            if(res.error) alert('حدث خطأ: ' + res.error.message);
+            else { cm('product'); await fetchProducts(); alert('تم حفظ المنتج!'); }
         };
 
         window.edPr = function(id, n, b, s) {
-            ePID = id;
-            om('product');
-            document.getElementById('mt-product').innerText = "تعديل بيانات المنتج";
+            ePID = id; om('product');
+            document.getElementById('mt-product').innerText = "تعديل البيانات";
             document.getElementById('p-name').value = n;
             document.getElementById('p-bc').value = b;
             document.getElementById('p-sel').value = s;
         };
 
         window.delPr = async function(id) {
-            if(confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+            if(confirm('هل أنت متأكد من الحذف؟')) {
                 let { error } = await dbClient.from('products').delete().eq('id', id);
                 if(error) alert('فشل الحذف: ' + error.message);
                 else fetchProducts();
@@ -427,12 +389,14 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             if(!c) return;
             let opts = '<option value="">اختر السلعة...</option>' + prds.map(p => `<option value="${p.name}" data-price="${p.sel}" ${p.name === pName ? 'selected' : ''}>${p.name}</option>`).join('');
             let r = document.createElement('div');
-            r.className = "flex gap-2 items-center bg-slate-50 p-3 rounded-xl border orow";
+            r.className = "flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-slate-50 p-2.5 rounded-xl border orow";
             r.innerHTML = `
                 <select class="border p-2 rounded-lg text-xs flex-1 bg-white osel" onchange="upPr(this)">${opts}</select>
-                <input type="number" placeholder="الكمية" value="${qty || 1}" class="border p-2 rounded-lg text-xs w-20 oqty" oninput="calc()">
-                <input type="number" placeholder="السعر" value="${pr}" class="border p-2 rounded-lg text-xs w-28 bg-slate-100 opr" oninput="calc()">
-                <button type="button" onclick="this.parentElement.remove(); calc();" class="text-red-600 font-bold px-2 text-sm">✕</button>
+                <div class="flex gap-2">
+                    <input type="number" placeholder="الكمية" value="${qty || 1}" class="border p-2 rounded-lg text-xs w-1/2 sm:w-20 oqty" oninput="calc()">
+                    <input type="number" placeholder="السعر" value="${pr}" class="border p-2 rounded-lg text-xs w-1/2 sm:w-24 bg-slate-100 opr" oninput="calc()">
+                    <button type="button" onclick="this.parentElement.parentElement.remove(); calc();" class="text-red-600 font-bold px-2 text-sm">✕</button>
+                </div>
             `;
             c.appendChild(r);
             calc();
@@ -466,7 +430,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
         window.svOrder = async function(print) {
             let clientName = document.getElementById('o-client').value;
-            if(!clientName) return alert('يرجى اختيار اسم المحل أولاً!');
+            if(!clientName) return alert('اختر المحل أولاً!');
             
             let items = [];
             document.querySelectorAll('.orow').forEach(r => {
@@ -476,22 +440,16 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                 if(prod && qty > 0) items.push({ prod, qty, pr });
             });
 
-            if(items.length === 0) return alert('يرجى إضافة سلعة واحدة على الأقل في الوصل!');
+            if(items.length === 0) return alert('أضف سلعة واحدة على الأقل!');
             
             let totalPrice = items.reduce((sum, i) => sum + (i.qty * i.pr), 0);
             let did = eOID ? ords.find(o => o.id === eOID).did : Math.floor(1000 + Math.random() * 9000);
             let data = { did, client_name: clientName, items, total_price: totalPrice, created_at: dt() };
 
-            let res;
-            if(eOID) {
-                res = await dbClient.from('orders').update(data).eq('id', eOID);
-                eOID = null;
-            } else {
-                res = await dbClient.from('orders').insert([data]);
-            }
+            let res = eOID ? await dbClient.from('orders').update(data).eq('id', eOID) : await dbClient.from('orders').insert([data]);
 
             if(res.error) {
-                alert('حدث خطأ أثناء حفظ الوصل: ' + res.error.message);
+                alert('حدث خطأ: ' + res.error.message);
             } else {
                 clearOrderForm();
                 if(print) prn({ did, clientName, items, totalPrice, created_at: data.created_at });
@@ -512,7 +470,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         };
 
         window.delOr = async function(id) {
-            if(confirm('هل أنت متأكد من حذف هذا الوصل من الأرشيف؟')) {
+            if(confirm('هل أنت متأكد من الحذف؟')) {
                 let { error } = await dbClient.from('orders').delete().eq('id', id);
                 if(error) alert('فشل الحذف: ' + error.message);
                 else fetchOrders();
@@ -532,53 +490,30 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                     <meta charset="UTF-8">
                     <title>وصل تسليم #${o.did || ''}</title>
                     <style>
-                        body{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; direction: rtl; }
-                        .header{ text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
-                        .title{ font-size: 22px; font-weight: bold; color: #1e293b; }
-                        .subtitle{ font-size: 14px; color: #64748b; }
-                        .box{ display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 15px; background: #f8fafc; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; }
-                        table{ width: 100%; border-collapse: collapse; margin-top: 15px; }
-                        th, td{ border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-size: 13px; }
-                        th{ background: #f1f5f9; color: #334155; }
-                        .total{ text-align: left; font-weight: bold; font-size: 18px; margin-top: 20px; color: #047857; }
-                        .footer{ margin-top: 40px; display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; }
+                        body{ font-family: 'Segoe UI', Tahoma, sans-serif; padding: 15px; direction: rtl; }
+                        .header{ text-align: center; border-bottom: 2px solid #333; padding-bottom: 8px; margin-bottom: 15px; }
+                        .title{ font-size: 18px; font-weight: bold; }
+                        .box{ display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px; background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; }
+                        table{ width: 100%; border-collapse: collapse; }
+                        th, td{ border: 1px solid #cbd5e1; padding: 8px; text-align: center; font-size: 12px; }
+                        th{ background: #f1f5f9; }
+                        .total{ text-align: left; font-weight: bold; font-size: 16px; margin-top: 15px; color: #047857; }
                     </style>
                 </head>
                 <body>
-                    <div class="header">
-                        <div class="title">وصل تسليم بضاعة (المحلات التجارية)</div>
-                        <div class="subtitle">توزيع السلع والبضائع بالجملة</div>
-                    </div>
+                    <div class="header"><div class="title">وصل تسليم بضاعة</div></div>
                     <div class="box">
                         <div>رقم الوصل: #${o.did || ''}</div>
-                        <div>التاريخ والوقت: ${o.created_at || ''}</div>
-                        <div>المحل المستلم: ${o.client_name || ''}</div>
+                        <div>التاريخ: ${o.created_at || ''}</div>
+                        <div>المحل: ${o.client_name || ''}</div>
                     </div>
                     <table>
-                        <thead>
-                            <tr>
-                                <th>اسم السلعة</th>
-                                <th>الكمية</th>
-                                <th>سعر الوحدة</th>
-                                <th>الإجمالي</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>السلعة</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
                         <tbody>
-                            ${(o.items || []).map(i => `
-                                <tr>
-                                    <td><b>${i.prod}</b></td>
-                                    <td>${i.qty}</td>
-                                    <td>${i.pr} DZD</td>
-                                    <td><b>${(i.qty * i.pr).toFixed(2)} DZD</b></td>
-                                </tr>
-                            `).join('')}
+                            ${(o.items || []).map(i => `<tr><td><b>${i.prod}</b></td><td>${i.qty}</td><td>${i.pr} DZD</td><td><b>${(i.qty * i.pr).toFixed(2)} DZD</b></td></tr>`).join('')}
                         </tbody>
                     </table>
-                    <div class="total">المبلغ الإجمالي الكلي: ${(o.total_price || 0).toFixed(2)} DZD</div>
-                    <div class="footer">
-                        <div>توقيع الموزع: _________________</div>
-                        <div>توقيع وختم المحل: _________________</div>
-                    </div>
+                    <div class="total">الإجمالي الكلي: ${(o.total_price || 0).toFixed(2)} DZD</div>
                     <script>window.onload = () => { window.print(); };<\/script>
                 </body>
                 </html>
@@ -594,11 +529,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             html5QrcodeScanner = new Html5Qrcode("interactive");
             html5QrcodeScanner.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 150 } },
-                (decodedText) => {
-                    onScanSuccess(decodedText);
-                    stopScanner();
-                },
+                { fps: 10, qrbox: { width: 220, height: 140 } },
+                (decodedText) => { onScanSuccess(decodedText); stopScanner(); },
                 (errorMessage) => {}
             );
         };
@@ -623,11 +555,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                 document.getElementById('p-bc').value = barcode;
             } else if (scanTarget === 'order') {
                 let p = prds.find(x => x.bc === barcode);
-                if (p) {
-                    addRow(p.name, 1, p.sel);
-                } else {
-                    alert(`الباركود (${barcode}) غير مسجل في قائمة المنتجات!`);
-                }
+                if (p) addRow(p.name, 1, p.sel);
+                else alert(`الباركود (${barcode}) غير مسجل!`);
             }
         }
 
