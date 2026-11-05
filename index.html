@@ -381,7 +381,6 @@
             }
         };
 
-        // إضافة سطر مع دعم المرتجعات (البيض المكسور أو التالف)
         window.addRow = function(pName = "", qty = "", pr = "", ret = "") {
             let c = document.getElementById('o-rows');
             if(!c) return;
@@ -425,7 +424,7 @@
                 let q = Number(r.querySelector('.oqty').value) || 0;
                 let p = Number(r.querySelector('.opr').value) || 0;
                 let ret = Number(r.querySelector('.oret').value) || 0;
-                let netQty = Math.max(0, q - ret); // خصم المرتجعات تلقائياً
+                let netQty = Math.max(0, q - ret);
                 t += netQty * p;
             });
             const totEl = document.getElementById('o-tot');
@@ -495,7 +494,6 @@
             rOrds(ords.filter(o => (o.created_at || '').toLowerCase().includes(q) || (o.client_name || '').toLowerCase().includes(q) || (String(o.did)).includes(q)));
         };
 
-        // طباعة وصل احترافي يتضمن رقم المورد والمرتجعات وتاريخ الصلاحية
         window.prn = function(o) {
             let pw = window.open('', '_blank', 'width=800,height=600');
             pw.document.write(`
@@ -539,12 +537,12 @@
                         </thead>
                         <tbody>
                             ${(o.items || []).map(i => {
-                                let netQ = Math.max(0, i.qty - i.ret);
+                                let netQ = Math.max(0, i.qty - (i.ret || 0));
                                 let lineTot = netQ * i.pr;
                                 return `<tr>
                                     <td><b>${i.prod}</b></td>
                                     <td>${i.qty}</td>
-                                    <td style="color: #dc2626;">${i.ret > <div>إرجاع: ${i.ret}</div> : '0'}</td>
+                                    <td style="color: #dc2626;">${i.ret || 0}</td>
                                     <td><b>${netQ}</b></td>
                                     <td>${i.pr} DZD</td>
                                     <td><b>${lineTot.toFixed(2)} DZD</b></td>
