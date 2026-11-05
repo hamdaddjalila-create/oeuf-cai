@@ -117,10 +117,10 @@
                     </div>
                 </div>
 
-                <!-- 3. المنتجات مع تنبيهات الصلاحية -->
+                <!-- 3. المنتجات مع التنبيهات الملونة -->
                 <div id="v-products" class="sec space-y-4 hidden">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-lg md:text-xl font-bold">إدارة المنتجات والتنبيهات</h3>
+                        <h3 class="text-lg md:text-xl font-bold">إدارة المنتجات وتاريخ الصلاحية</h3>
                         <button type="button" onclick="om('product')" class="bg-amber-600 text-white px-3 py-2 rounded-xl text-xs md:text-sm font-bold">+ منتج جديد</button>
                     </div>
                     <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
@@ -130,8 +130,7 @@
                                     <th class="p-3">اسم المنتوج</th>
                                     <th class="p-3">الباركود</th>
                                     <th class="p-3">السعر</th>
-                                    <th class="p-3">تاريخ الصلاحية</th>
-                                    <th class="p-3">حالة الصلاحية</th>
+                                    <th class="p-3">تاريخ الصلاحية والتنبيه</th>
                                     <th class="p-3 text-center">الإجراءات</th>
                                 </tr>
                             </thead>
@@ -298,21 +297,28 @@
             </tr>`).join('');
         }
 
-        // حساب حالة التنبيه بالمرئيات والتنبيه التلقائي
+        // دالة تحديد الألوان والتنبيه بناءً على التاريخ
         function getExpBadge(expDateStr) {
             if (!expDateStr) return `<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs">غير محدد</span>`;
             
-            const today = new Date();
-            today.setHours(0,0,0,0);
+            // حساب التاريخ الحالي بدون ساعات لتجنب مشاكل التوقيت
+            const now = new Date();
+            const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            
+            const today = new Date(todayStr);
             const expDate = new Date(expDateStr);
-            const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+            
+            const diffTime = expDate - today;
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
             if (diffDays < 0) {
-                return `<span class="bg-red-100 text-red-700 font-bold px-2.5 py-1 rounded-full text-xs">⚠️ منتهي الصلاحية</span>`;
+                return `<span class="bg-red-100 text-red-700 font-bold px-2.5 py-1 rounded-full text-xs">⚠️ منتهي الصلاحية (${expDateStr})</span>`;
+            } else if (diffDays === 0) {
+                return `<span class="bg-red-500 text-white font-bold px-2.5 py-1 rounded-full text-xs animate-pulse">🔥 ينتهي اليوم! (${expDateStr})</span>`;
             } else if (diffDays <= 7) {
-                return `<span class="bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full text-xs">⏳ ينتهي خلال ${diffDays} أيام</span>`;
+                return `<span class="bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full text-xs">⏳ ينتهي خلال ${diffDays} أيام (${expDateStr})</span>`;
             } else {
-                return `<span class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full text-xs">✅ صالح (${diffDays} يوم)</span>`;
+                return `<span class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full text-xs">✅ صالح حتى ${expDateStr}</span>`;
             }
         }
 
@@ -324,7 +330,6 @@
                     <td class="p-3 font-bold text-slate-800">${p.name||''}</td>
                     <td class="p-3 font-mono text-xs bg-slate-50 rounded">${p.bc || 'بدون باركود'}</td>
                     <td class="p-3 text-emerald-600 font-bold font-mono">${p.sel||0} DZD</td>
-                    <td class="p-3 font-mono text-xs">${p.exp || 'غير محدد'}</td>
                     <td class="p-3">${badge}</td>
                     <td class="p-3 text-center space-x-1 space-x-reverse whitespace-nowrap">
                         <button type="button" onclick="edPr(${p.id}, '${p.name||''}', '${p.bc||''}', ${p.sel||0}, '${p.exp||''}')" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs font-bold">✏️</button>
@@ -626,4 +631,3 @@
     </script>
 </body>
 </html>
-    
