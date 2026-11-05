@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تطبيق توزيع المنتجات للمحلات الكبرى - Supabase</title>
+    <title>نظام توزيع البيض والسمان Pro - Supabase</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -15,21 +15,20 @@
 <body class="bg-slate-100 text-slate-800">
     <div class="flex flex-col md:flex-row min-h-screen">
         
-        <!-- القائمة الجانبية (متجاوبة: أعلى الصفحة في الهاتف، وعلى اليمين في الحاسوب) -->
+        <!-- القائمة الجانبية -->
         <aside class="w-full md:w-64 bg-slate-900 text-white flex flex-col justify-between p-4 sticky top-0 z-40 shadow-md">
             <div class="space-y-4 md:space-y-6">
                 <div class="flex items-center justify-between md:justify-start gap-3 px-2">
                     <div class="flex items-center gap-2">
-                        <span class="text-2xl md:text-3xl">🏬</span>
+                        <span class="text-2xl md:text-3xl">🥚</span>
                         <div>
-                            <h1 class="font-bold text-amber-400 text-xs md:text-sm">توزيع البضائع Pro</h1>
-                            <p class="text-[9px] md:text-[10px] text-slate-400">نظام Supabase السحابي</p>
+                            <h1 class="font-bold text-amber-400 text-xs md:text-sm">توزيع البيض والسمان</h1>
+                            <p class="text-[9px] md:text-[10px] text-slate-400">الهاتف: 0555688855</p>
                         </div>
                     </div>
                     <span class="md:hidden text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">سحابي ☁️</span>
                 </div>
                 
-                <!-- أزرار التنقل (أفقية للتمرير في الهاتف، وعمودية في الحاسوب) -->
                 <nav class="flex md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
                     <button type="button" onclick="st('orders')" id="nav-orders" class="whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm bg-amber-600 text-white flex items-center gap-2 flex-shrink-0">🛒 <span>وصل جديد</span></button>
                     <button type="button" onclick="st('archive')" id="nav-archive" class="whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm text-slate-300 hover:bg-slate-800 flex items-center gap-2 flex-shrink-0">📂 <span>الأرشيف</span></button>
@@ -37,14 +36,14 @@
                     <button type="button" onclick="st('clients')" id="nav-clients" class="whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm text-slate-300 hover:bg-slate-800 flex items-center gap-2 flex-shrink-0">🏪 <span>المحلات</span></button>
                 </nav>
             </div>
-            <div class="hidden md:block text-xs text-slate-500 text-center border-t border-slate-800 pt-3">قاعدة بيانات PostgreSQL</div>
+            <div class="hidden md:block text-xs text-slate-500 text-center border-t border-slate-800 pt-3">مؤسسة التوزيع السحابي</div>
         </aside>
 
         <!-- المحتوى الرئيسي -->
         <div class="flex-1 flex flex-col min-w-0">
             <header class="bg-white shadow-sm border-b h-14 md:h-16 flex items-center justify-between px-4 md:px-6">
                 <h2 id="page-title" class="text-base md:text-lg font-bold text-slate-700">كتابة وصل جديد</h2>
-                <div id="scanner-status" class="text-[10px] md:text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full hidden">📷 الماسح جاهز</div>
+                <div class="text-xs text-slate-500 font-mono">📞 0555688855</div>
             </header>
 
             <main class="p-3 md:p-6 space-y-4 md:space-y-6">
@@ -53,7 +52,7 @@
                     <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-bold text-slate-600 mb-1">اسم المحل التجاري المستهدف:</label>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">اختر المحل التجاري:</label>
                                 <select id="o-client" class="w-full border p-2.5 md:p-3 rounded-xl text-xs md:text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-amber-500">
                                     <option value="">اختر المحل...</option>
                                 </select>
@@ -65,37 +64,37 @@
                             </div>
                         </div>
 
-                        <!-- جدول السلع داخل الوصل -->
+                        <!-- جدول السلع والمرتجعات -->
                         <div class="border-t border-b py-3 space-y-3">
                             <div class="flex justify-between items-center">
-                                <span class="font-bold text-xs md:text-sm">تفاصيل السلع في الوصل:</span>
+                                <span class="font-bold text-xs md:text-sm">تفاصيل السلع والمرتجعات:</span>
                                 <button type="button" onclick="addRow()" class="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ إضافة سلعة</button>
                             </div>
                             <div id="o-rows" class="space-y-2"></div>
                         </div>
 
-                        <!-- إجمالي الوصل والتاريخ -->
+                        <!-- إجمالي الوصل -->
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-amber-50 p-3 md:p-4 rounded-xl border border-amber-200">
                             <div>
                                 <span class="text-[10px] md:text-xs text-amber-800 font-bold block">التاريخ والوقت:</span>
                                 <span id="current-time-display" class="text-xs font-mono text-slate-600">--/--/---- --:--</span>
                             </div>
                             <div class="text-right sm:text-left w-full sm:w-auto border-t sm:border-0 pt-2 sm:pt-0">
-                                <span class="text-[10px] md:text-xs text-slate-500 block">الإجمالي الكلي:</span>
+                                <span class="text-[10px] md:text-xs text-slate-500 block">الإجمالي النهائي للوصل:</span>
                                 <span id="o-tot" class="text-xl md:text-2xl font-bold text-amber-700">0.00 DZD</span>
                             </div>
                         </div>
 
-                        <!-- أزرار حفظ وإلغاء وطباعة الوصل -->
+                        <!-- أزرار الحفظ -->
                         <div class="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                             <button type="button" onclick="clearOrderForm()" class="w-full sm:w-auto bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold">إلغاء</button>
                             <button type="button" onclick="svOrder(false)" class="w-full sm:w-auto bg-amber-600 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-amber-700">💾 حفظ الوصل</button>
-                            <button type="button" onclick="svOrder(true)" class="w-full sm:w-auto bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-emerald-700">🖨️ حفظ وطباعة</button>
+                            <button type="button" onclick="svOrder(true)" class="w-full sm:w-auto bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-emerald-700">🖨️ حفظ وطباعة الوصل الاحترافي</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. أرشيف الوصولات -->
+                <!-- 2. الأرشيف -->
                 <div id="v-archive" class="sec space-y-4 hidden">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <h3 class="text-lg md:text-xl font-bold">أرشيف الوصولات</h3>
@@ -106,7 +105,7 @@
                             <thead>
                                 <tr class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
                                     <th class="p-3">رقم الوصل</th>
-                                    <th class="p-3">التاريخ والوقت</th>
+                                    <th class="p-3">التاريخ</th>
                                     <th class="p-3">المحل</th>
                                     <th class="p-3">السلع</th>
                                     <th class="p-3">الإجمالي</th>
@@ -118,10 +117,10 @@
                     </div>
                 </div>
 
-                <!-- 3. إدارة المنتجات -->
+                <!-- 3. المنتجات -->
                 <div id="v-products" class="sec space-y-4 hidden">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-lg md:text-xl font-bold">المنتجات والأسعار</h3>
+                        <h3 class="text-lg md:text-xl font-bold">المنتجات (بيض وأسماك)</h3>
                         <button type="button" onclick="om('product')" class="bg-amber-600 text-white px-3 py-2 rounded-xl text-xs md:text-sm font-bold">+ منتج جديد</button>
                     </div>
                     <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
@@ -131,6 +130,7 @@
                                     <th class="p-3">اسم المنتوج</th>
                                     <th class="p-3">الباركود</th>
                                     <th class="p-3">السعر</th>
+                                    <th class="p-3">تاريخ الصلاحية</th>
                                     <th class="p-3 text-center">الإجراءات</th>
                                 </tr>
                             </thead>
@@ -139,17 +139,17 @@
                     </div>
                 </div>
 
-                <!-- 4. إدارة المحلات -->
+                <!-- 4. المحلات -->
                 <div id="v-clients" class="sec space-y-4 hidden">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-lg md:text-xl font-bold">المحلات والموردين</h3>
+                        <h3 class="text-lg md:text-xl font-bold">المحلات الكبرى</h3>
                         <button type="button" onclick="om('client')" class="bg-amber-600 text-white px-3 py-2 rounded-xl text-xs md:text-sm font-bold">+ محل جديد</button>
                     </div>
                     <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
                         <table class="w-full text-right border-collapse min-w-[500px]">
                             <thead>
                                 <tr class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
-                                    <th class="p-3">المحل / المورد</th>
+                                    <th class="p-3">اسم المحل</th>
                                     <th class="p-3">الهاتف</th>
                                     <th class="p-3">العنوان</th>
                                     <th class="p-3 text-center">الإجراءات</th>
@@ -163,33 +163,37 @@
         </div>
     </div>
 
-    <!-- نافذة محل جديد -->
+    <!-- نافذة محل -->
     <div id="m-client" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl">
             <h3 id="mt-client" class="text-base font-bold">إضافة محل جديد</h3>
             <input type="text" id="c-name" placeholder="اسم المحل التجاري" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
             <input type="text" id="c-ph" placeholder="رقم الهاتف" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
-            <input type="text" id="c-ad" placeholder="عنوان المحل / الموقع" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
+            <input type="text" id="c-ad" placeholder="عنوان المحل" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
             <div class="flex justify-end gap-2">
-                <button type="button" onclick="cm('client')" class="bg-slate-200 px-4 py-2 rounded-xl text-xs md:text-sm font-bold">إلغاء</button>
-                <button type="button" onclick="svClient()" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs md:text-sm font-bold">حفظ</button>
+                <button type="button" onclick="cm('client')" class="bg-slate-200 px-4 py-2 rounded-xl text-xs font-bold">إلغاء</button>
+                <button type="button" onclick="svClient()" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold">حفظ</button>
             </div>
         </div>
     </div>
 
-    <!-- نافذة منتج جديد -->
+    <!-- نافذة منتج مع تاريخ الصلاحية -->
     <div id="m-product" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl">
             <h3 id="mt-product" class="text-base font-bold">إضافة منتوج جديد</h3>
-            <input type="text" id="p-name" placeholder="اسم المنتوج" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
+            <input type="text" id="p-name" placeholder="اسم المنتوج (مثال: طبق بيض بلدي / سمان مجمد)" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
             <div class="flex gap-2">
                 <input type="text" id="p-bc" placeholder="الكود بار (Barcode)" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
                 <button type="button" onclick="startScanner('product')" class="bg-blue-600 text-white px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap">📷 مسح</button>
             </div>
-            <input type="number" id="p-sel" placeholder="سعر البيع (DZD)" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
+            <input type="number" id="p-sel" placeholder="سعر الوحدة (DZD)" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
+            <div>
+                <label class="block text-[11px] font-bold text-slate-500 mb-1">تاريخ الصلاحية / الانتهاء:</label>
+                <input type="date" id="p-exp" class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
+            </div>
             <div class="flex justify-end gap-2">
-                <button type="button" onclick="cm('product')" class="bg-slate-200 px-4 py-2 rounded-xl text-xs md:text-sm font-bold">إلغاء</button>
-                <button type="button" onclick="svProduct()" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs md:text-sm font-bold">حفظ المنتوج</button>
+                <button type="button" onclick="cm('product')" class="bg-slate-200 px-4 py-2 rounded-xl text-xs font-bold">إلغاء</button>
+                <button type="button" onclick="svProduct()" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold">حفظ المنتج</button>
             </div>
         </div>
     </div>
@@ -216,9 +220,7 @@
 
         function dt() {
             const n = new Date();
-            const dateStr = n.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
-            const timeStr = n.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-            return `${dateStr} - ${timeStr}`;
+            return `${n.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' })} - ${n.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
         }
 
         setInterval(() => {
@@ -260,7 +262,7 @@
             const activeNav = document.getElementById('nav-' + id);
             if (activeNav) activeNav.className = "whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm bg-amber-600 text-white flex items-center gap-2 flex-shrink-0";
             
-            const titles = { 'orders': 'كتابة وصل جديد', 'archive': 'أرشيف الوصولات', 'products': 'إدارة المنتجات', 'clients': 'إدارة المحلات والموردين' };
+            const titles = { 'orders': 'كتابة وصل جديد', 'archive': 'أرشيف الوصولات', 'products': 'إدارة المنتجات', 'clients': 'إدارة المحلات' };
             const pageTitle = document.getElementById('page-title');
             if (pageTitle) pageTitle.innerText = titles[id] || '';
         };
@@ -273,16 +275,8 @@
         window.cm = function(n) {
             const m = document.getElementById('m-' + n);
             if (m) { m.classList.remove('flex'); m.classList.add('hidden'); }
-            if(n==='client') { 
-                eCID = null; 
-                document.getElementById('mt-client').innerText = "إضافة محل جديد";
-                ['c-name', 'c-ph', 'c-ad'].forEach(i => document.getElementById(i).value = ''); 
-            }
-            if(n==='product') { 
-                ePID = null; 
-                document.getElementById('mt-product').innerText = "إضافة منتوج جديد";
-                ['p-name', 'p-bc', 'p-sel'].forEach(i => document.getElementById(i).value = ''); 
-            }
+            if(n==='client') { eCID = null; document.getElementById('mt-client').innerText = "إضافة محل جديد"; ['c-name', 'c-ph', 'c-ad'].forEach(i => document.getElementById(i).value = ''); }
+            if(n==='product') { ePID = null; document.getElementById('mt-product').innerText = "إضافة منتوج جديد"; ['p-name', 'p-bc', 'p-sel', 'p-exp'].forEach(i => document.getElementById(i).value = ''); }
         };
 
         function popSel() {
@@ -309,8 +303,9 @@
                 <td class="p-3 font-bold text-slate-800">${p.name||''}</td>
                 <td class="p-3 font-mono text-xs bg-slate-50 rounded">${p.bc || 'بدون باركود'}</td>
                 <td class="p-3 text-emerald-600 font-bold font-mono">${p.sel||0} DZD</td>
+                <td class="p-3 font-mono text-xs text-amber-700">${p.exp || 'غير محدد'}</td>
                 <td class="p-3 text-center space-x-1 space-x-reverse whitespace-nowrap">
-                    <button type="button" onclick="edPr(${p.id}, '${p.name||''}', '${p.bc||''}', ${p.sel||0})" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs font-bold">✏️</button>
+                    <button type="button" onclick="edPr(${p.id}, '${p.name||''}', '${p.bc||''}', ${p.sel||0}, '${p.exp||''}')" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs font-bold">✏️</button>
                     <button type="button" onclick="delPr(${p.id})" class="bg-red-50 text-red-600 px-2 py-1 rounded text-xs font-bold">🗑️</button>
                 </td>
             </tr>`).join('');
@@ -361,19 +356,21 @@
             let name = document.getElementById('p-name').value;
             let bc = document.getElementById('p-bc').value;
             let sel = Number(document.getElementById('p-sel').value);
+            let exp = document.getElementById('p-exp').value;
             if(!name) return alert('يرجى إدخال اسم المنتوج');
-            let d = { name, bc, sel };
+            let d = { name, bc, sel, exp };
             let res = ePID ? await dbClient.from('products').update(d).eq('id', ePID) : await dbClient.from('products').insert([d]);
             if(res.error) alert('حدث خطأ: ' + res.error.message);
             else { cm('product'); await fetchProducts(); alert('تم حفظ المنتج!'); }
         };
 
-        window.edPr = function(id, n, b, s) {
+        window.edPr = function(id, n, b, s, x) {
             ePID = id; om('product');
-            document.getElementById('mt-product').innerText = "تعديل البيانات";
+            document.getElementById('mt-product').innerText = "تعديل المنتج";
             document.getElementById('p-name').value = n;
             document.getElementById('p-bc').value = b;
             document.getElementById('p-sel').value = s;
+            document.getElementById('p-exp').value = x;
         };
 
         window.delPr = async function(id) {
@@ -384,18 +381,31 @@
             }
         };
 
-        window.addRow = function(pName = "", qty = "", pr = "") {
+        // إضافة سطر مع دعم المرتجعات (البيض المكسور أو التالف)
+        window.addRow = function(pName = "", qty = "", pr = "", ret = "") {
             let c = document.getElementById('o-rows');
             if(!c) return;
             let opts = '<option value="">اختر السلعة...</option>' + prds.map(p => `<option value="${p.name}" data-price="${p.sel}" ${p.name === pName ? 'selected' : ''}>${p.name}</option>`).join('');
             let r = document.createElement('div');
-            r.className = "flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-slate-50 p-2.5 rounded-xl border orow";
+            r.className = "flex flex-col gap-2 bg-slate-50 p-3 rounded-xl border orow";
             r.innerHTML = `
-                <select class="border p-2 rounded-lg text-xs flex-1 bg-white osel" onchange="upPr(this)">${opts}</select>
                 <div class="flex gap-2">
-                    <input type="number" placeholder="الكمية" value="${qty || 1}" class="border p-2 rounded-lg text-xs w-1/2 sm:w-20 oqty" oninput="calc()">
-                    <input type="number" placeholder="السعر" value="${pr}" class="border p-2 rounded-lg text-xs w-1/2 sm:w-24 bg-slate-100 opr" oninput="calc()">
-                    <button type="button" onclick="this.parentElement.parentElement.remove(); calc();" class="text-red-600 font-bold px-2 text-sm">✕</button>
+                    <select class="border p-2 rounded-lg text-xs flex-1 bg-white osel" onchange="upPr(this)">${opts}</select>
+                    <button type="button" onclick="this.closest('.orow').remove(); calc();" class="text-red-600 font-bold px-2 text-sm bg-red-50 rounded">✕</button>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="text-[10px] text-slate-500 block">الكمية المسلمة</label>
+                        <input type="number" placeholder="الكمية" value="${qty || 1}" class="border p-2 rounded-lg text-xs w-full oqty bg-white" oninput="calc()">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-500 block">السعر للوحدة</label>
+                        <input type="number" placeholder="السعر" value="${pr}" class="border p-2 rounded-lg text-xs w-full bg-slate-100 opr" oninput="calc()">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-red-600 font-bold block">المرتجعات (تالف/كسر)</label>
+                        <input type="number" placeholder="مرتجع" value="${ret || 0}" class="border p-2 rounded-lg text-xs w-full oret bg-red-50 text-red-700 font-bold" oninput="calc()">
+                    </div>
                 </div>
             `;
             c.appendChild(r);
@@ -414,7 +424,9 @@
             document.querySelectorAll('.orow').forEach(r => {
                 let q = Number(r.querySelector('.oqty').value) || 0;
                 let p = Number(r.querySelector('.opr').value) || 0;
-                t += q * p;
+                let ret = Number(r.querySelector('.oret').value) || 0;
+                let netQty = Math.max(0, q - ret); // خصم المرتجعات تلقائياً
+                t += netQty * p;
             });
             const totEl = document.getElementById('o-tot');
             if(totEl) totEl.innerText = t.toFixed(2) + ' DZD';
@@ -437,12 +449,13 @@
                 let prod = r.querySelector('.osel').value;
                 let qty = Number(r.querySelector('.oqty').value);
                 let pr = Number(r.querySelector('.opr').value);
-                if(prod && qty > 0) items.push({ prod, qty, pr });
+                let ret = Number(r.querySelector('.oret').value) || 0;
+                if(prod && qty > 0) items.push({ prod, qty, pr, ret });
             });
 
             if(items.length === 0) return alert('أضف سلعة واحدة على الأقل!');
             
-            let totalPrice = items.reduce((sum, i) => sum + (i.qty * i.pr), 0);
+            let totalPrice = items.reduce((sum, i) => sum + ((i.qty - i.ret) * i.pr), 0);
             let did = eOID ? ords.find(o => o.id === eOID).did : Math.floor(1000 + Math.random() * 9000);
             let data = { did, client_name: clientName, items, total_price: totalPrice, created_at: dt() };
 
@@ -452,7 +465,7 @@
                 alert('حدث خطأ: ' + res.error.message);
             } else {
                 clearOrderForm();
-                if(print) prn({ did, clientName, items, totalPrice, created_at: data.created_at });
+                if(print) prn(data);
                 await fetchOrders();
                 alert('تم حفظ الوصل بنجاح!');
             }
@@ -465,7 +478,7 @@
             st('orders');
             document.getElementById('o-client').value = o.client_name;
             document.getElementById('o-rows').innerHTML = '';
-            (o.items || []).forEach(i => addRow(i.prod, i.qty, i.pr));
+            (o.items || []).forEach(i => addRow(i.prod, i.qty, i.pr, i.ret));
             calc();
         };
 
@@ -482,38 +495,70 @@
             rOrds(ords.filter(o => (o.created_at || '').toLowerCase().includes(q) || (o.client_name || '').toLowerCase().includes(q) || (String(o.did)).includes(q)));
         };
 
+        // طباعة وصل احترافي يتضمن رقم المورد والمرتجعات وتاريخ الصلاحية
         window.prn = function(o) {
             let pw = window.open('', '_blank', 'width=800,height=600');
             pw.document.write(`
                 <html dir="rtl">
                 <head>
                     <meta charset="UTF-8">
-                    <title>وصل تسليم #${o.did || ''}</title>
+                    <title>وصل تسليم بضاعة #${o.did || ''}</title>
                     <style>
-                        body{ font-family: 'Segoe UI', Tahoma, sans-serif; padding: 15px; direction: rtl; }
-                        .header{ text-align: center; border-bottom: 2px solid #333; padding-bottom: 8px; margin-bottom: 15px; }
-                        .title{ font-size: 18px; font-weight: bold; }
-                        .box{ display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px; background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; }
-                        table{ width: 100%; border-collapse: collapse; }
-                        th, td{ border: 1px solid #cbd5e1; padding: 8px; text-align: center; font-size: 12px; }
-                        th{ background: #f1f5f9; }
-                        .total{ text-align: left; font-weight: bold; font-size: 16px; margin-top: 15px; color: #047857; }
+                        body{ font-family: 'Segoe UI', Tahoma, sans-serif; padding: 20px; direction: rtl; color: #1e293b; }
+                        .header{ text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px; }
+                        .title{ font-size: 20px; font-weight: bold; color: #0f172a; }
+                        .sub-title{ font-size: 13px; color: #475569; margin-top: 4px; }
+                        .box{ display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 15px; background: #f8fafc; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
+                        table{ width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                        th, td{ border: 1px solid #94a3b8; padding: 9px; text-align: center; font-size: 12px; }
+                        th{ background: #f1f5f9; font-weight: bold; }
+                        .total{ text-align: left; font-weight: bold; font-size: 17px; margin-top: 15px; color: #047857; background: #ecfdf5; padding: 10px; border-radius: 6px; border: 1px solid #10b981; }
+                        .footer{ margin-top: 30px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
                     </style>
                 </head>
                 <body>
-                    <div class="header"><div class="title">وصل تسليم بضاعة</div></div>
+                    <div class="header">
+                        <div class="title">مؤسسة توزيع بيض العرب، السمان واللحوم المجمدة</div>
+                        <div class="sub-title">هاتف المورد: <b>0555688855</b></div>
+                    </div>
                     <div class="box">
-                        <div>رقم الوصل: #${o.did || ''}</div>
-                        <div>التاريخ: ${o.created_at || ''}</div>
-                        <div>المحل: ${o.client_name || ''}</div>
+                        <div>رقم الوصل: <b>#BL-${o.did || ''}</b></div>
+                        <div>التاريخ والوقت: <b>${o.created_at || ''}</b></div>
+                        <div>المحل المستفيد: <b>${o.client_name || ''}</b></div>
                     </div>
                     <table>
-                        <thead><tr><th>السلعة</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>السلعة</th>
+                                <th>الكمية</th>
+                                <th>المرتجعات (تالف/كسر)</th>
+                                <th>الكمية الصافية</th>
+                                <th>السعر الفردي</th>
+                                <th>الإجمالي الصافي</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            ${(o.items || []).map(i => `<tr><td><b>${i.prod}</b></td><td>${i.qty}</td><td>${i.pr} DZD</td><td><b>${(i.qty * i.pr).toFixed(2)} DZD</b></td></tr>`).join('')}
+                            ${(o.items || []).map(i => {
+                                let netQ = Math.max(0, i.qty - i.ret);
+                                let lineTot = netQ * i.pr;
+                                return `<tr>
+                                    <td><b>${i.prod}</b></td>
+                                    <td>${i.qty}</td>
+                                    <td style="color: #dc2626;">${i.ret > <div>إرجاع: ${i.ret}</div> : '0'}</td>
+                                    <td><b>${netQ}</b></td>
+                                    <td>${i.pr} DZD</td>
+                                    <td><b>${lineTot.toFixed(2)} DZD</b></td>
+                                </tr>`;
+                            }).join('')}
                         </tbody>
                     </table>
-                    <div class="total">الإجمالي الكلي: ${(o.total_price || 0).toFixed(2)} DZD</div>
+                    <div class="total">الإجمالي الكلي المستحق: ${(o.total_price || 0).toFixed(2)} DZD</div>
+                    
+                    <div class="footer">
+                        <div>إمضاء وختم المورد: 0555688855</div>
+                        <div>إمضاء المستلم (المحل): ........................</div>
+                    </div>
+
                     <script>window.onload = () => { window.print(); };<\/script>
                 </body>
                 </html>
@@ -525,7 +570,6 @@
             scanTarget = target;
             document.getElementById('m-scanner').classList.remove('hidden');
             document.getElementById('m-scanner').classList.add('flex');
-            
             html5QrcodeScanner = new Html5Qrcode("interactive");
             html5QrcodeScanner.start(
                 { facingMode: "environment" },
@@ -537,10 +581,7 @@
 
         window.stopScanner = function() {
             if (html5QrcodeScanner) {
-                html5QrcodeScanner.stop().then(() => {
-                    document.getElementById('m-scanner').classList.remove('flex');
-                    document.getElementById('m-scanner').classList.add('hidden');
-                }).catch(() => {
+                html5QrcodeScanner.stop().catch(() => {}).finally(() => {
                     document.getElementById('m-scanner').classList.remove('flex');
                     document.getElementById('m-scanner').classList.add('hidden');
                 });
@@ -555,7 +596,7 @@
                 document.getElementById('p-bc').value = barcode;
             } else if (scanTarget === 'order') {
                 let p = prds.find(x => x.bc === barcode);
-                if (p) addRow(p.name, 1, p.sel);
+                if (p) addRow(p.name, 1, p.sel, 0);
                 else alert(`الباركود (${barcode}) غير مسجل!`);
             }
         }
