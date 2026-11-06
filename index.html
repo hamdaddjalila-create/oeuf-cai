@@ -6,8 +6,8 @@
     <title>توزيع البيض والسمان</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Supabase JS v1 CDN (المكتبة المستقرة والمتوافقة 100%) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/1.35.7/supabase.min.js"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -283,11 +283,12 @@
         </div>
     </div>
 
-    <!-- كود الجافاسكريبت مع الرابط والمفتاح الطويل الصحيح -->
+    <!-- كود الاتصال السحابي الصحيح -->
     <script>
         const SUPABASE_URL = 'https://fvsfeysalnnlsbacxnni.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2c2ZleXNhbG5ubHNiYWN4bm5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA3OTA0NzIsImV4cCI6MjA0NjM2NjQ3Mn0.oZ-l1e0Xw8c7j7N9N-984_QyJzR6lG0K_yF1L6Xm0';
         
+        // استخدام الطريقة الصحيحة لإنشاء العميل في النسخة المستقرة
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentOrderItems = [];
@@ -421,7 +422,7 @@
                 total_amount: total,
                 paid_amount: paid,
                 created_at: new Date().toISOString()
-            }]).select();
+            }]);
 
             if (error) return alert("حدث خطأ أثناء الحفظ: " + error.message);
 
@@ -437,7 +438,7 @@
             if (shouldPrint) {
                 document.getElementById('pr-date').innerText = new Date().toLocaleString('ar-DZ');
                 document.getElementById('pr-client').innerText = client.name;
-                document.getElementById('pr-id').innerText = data[0].id;
+                document.getElementById('pr-id').innerText = data && data[0] ? data[0].id : 'جديد';
                 const prTbody = document.getElementById('pr-items');
                 prTbody.innerHTML = '';
                 currentOrderItems.forEach(i => {
