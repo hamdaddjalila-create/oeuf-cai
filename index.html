@@ -283,11 +283,15 @@
         </div>
     </div>
 
-    <!-- كود الجافاسكريبت والربط السحابي -->
+    <!-- كود الجافاسكريبت والربط السحابي (مع التصحيح) -->
     <script>
         const SUPABASE_URL = 'https://fvsfeysalnnlsbacxnni.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2c2ZleXNhbG5ubHNiYWN4bm5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA3OTA0NzIsImV4cCI6MjA0NjM2NjQ3Mn0.oZ-l1e0Xw8c7j7N9N-984_QyJzR6lG0K_yF1L6Xm0';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // تهيئة عميل سوبابيس مع تفعيل رأس المصادقة الصحيح لمنع خطأ 401
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: { persistSession: false }
+        });
 
         let currentOrderItems = [];
         let allProducts = [];
@@ -312,7 +316,8 @@
         }
 
         async function loadClients() {
-            const { data } = await supabaseClient.from('clients').select('*');
+            const { data, error } = await supabaseClient.from('clients').select('*');
+            if (error) { console.error("Error loading clients:", error); return; }
             allClients = data || [];
             const select = document.getElementById('order-client-select');
             select.innerHTML = '<option value="">-- اختر المحل --</option>';
@@ -322,7 +327,8 @@
         }
 
         async function loadProducts() {
-            const { data } = await supabaseClient.from('products').select('*');
+            const { data, error } = await supabaseClient.from('products').select('*');
+            if (error) { console.error("Error loading products:", error); return; }
             allProducts = data || [];
             const select = document.getElementById('order-prod-select');
             select.innerHTML = '<option value="">-- اختر المنتج --</option>';
@@ -420,7 +426,7 @@
                 created_at: new Date().toISOString()
             }]).select();
 
-            if (error) return alert("حدث خطأ أثناء الحفظ");
+            if (error) return alert("حدث خطأ أثناء الحفظ: " + error.message);
 
             // خصم الكمية من المخزون
             for (let item of currentOrderItems) {
@@ -458,7 +464,8 @@
 
             if (!name || !sell) return alert("يرجى ملء الاسم وسعر البيع");
 
-            await supabaseClient.from('products').insert([{ name, buy_price: buy, sel: sell, stock }]);
+            const { error } = await supabaseClient.from('products').insert([{ name, buy_price: buy, sel: sell, stock }]);
+            if (error) { alert("خطأ في إضافة المنتج: " + error.message); return; }
             location.reload();
         }
 
@@ -469,12 +476,15 @@
 
             if (!name) return alert("يرجى كتابة اسم المحل");
 
-            await supabaseClient.from('clients').insert([{ name, ph, ad }]);
+            const { error } = await supabaseClient.from('clients').insert([{ name, ph, ad }]);
+            if (error) { alert("خطأ في إضافة المحل: " + error.message); return; }
             location.reload();
         }
 
         async function loadArchive() {
-            const { data } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+            if (error) { console.error("Error loading archive:", error); return; }
+            
             const tbody = document.getElementById('archive-tbody');
             tbody.innerHTML = '';
             let todaySales = 0;
@@ -484,9 +494,8 @@
                 let d = new Date(o.created_at);
                 if (d.toDateString() === new Date().toDateString()) {
                     todaySales += (o.total_amount || 0);
-                    // حساب الأرباح التقريبية بناءً على الوصولات اليومية
                     if (o.total_amount > 0) {
-                        todayProfit += (o.total_amount * 0.2); // نسبة تقديرية للأرباح أو صافي التكلفة
+                        todayProfit += (o.total_amount * 0.2);
                     }
                 }
                 tbody.innerHTML += `
@@ -564,4 +573,3 @@
     </script>
 </body>
 </html>
-
