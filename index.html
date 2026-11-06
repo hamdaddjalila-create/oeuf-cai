@@ -283,12 +283,11 @@
         </div>
     </div>
 
-    <!-- كود الجافاسكريبت والربط السحابي (مع التصحيح) -->
+    <!-- كود الجافاسكريبت المحدث مع مفتاح Publishable الجديد -->
     <script>
         const SUPABASE_URL = 'https://fvsfeysalnnlsbacxnni.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2c2ZleXNhbG5ubHNiYWN4bm5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA3OTA0NzIsImV4cCI6MjA0NjM2NjQ3Mn0.oZ-l1e0Xw8c7j7N9N-984_QyJzR6lG0K_yF1L6Xm0';
+        const SUPABASE_KEY = 'sb_publishable_WxCO3Du5WrdtwW1nx_4Tbg_5swqP3YM';
         
-        // تهيئة عميل سوبابيس مع تفعيل رأس المصادقة الصحيح لمنع خطأ 401
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
             auth: { persistSession: false }
         });
