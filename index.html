@@ -357,7 +357,7 @@
             const activeNav = document.getElementById('nav-' + id);
             if (activeNav) activeNav.className = "whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm bg-amber-600 text-white flex items-center gap-2 flex-shrink-0";
             
-            const titles = { 'orders': 'كتابة وصل جديد', 'archive': 'أرشيف الوصولات والأرباح', 'products': 'إدارة المنتجات والمخزون', 'debts': 'ديون المحلات التجاري', 'clients': 'إدارة المحلات' };
+            const titles = { 'orders': 'كتابة وصل جديد', 'archive': 'أرشيف الوصولات والأرباح', 'products': 'إدارة المنتجات والمخزون', 'debts': 'ديون المحلات التجارية', 'clients': 'إدارة المحلات' };
             const pageTitle = document.getElementById('page-title');
             if (pageTitle) pageTitle.innerText = titles[id] || '';
         };
@@ -473,363 +473,364 @@
         }
 
         function calcOrderProfit(o) {
-            let profit = 0;
-            (o.items || []).forEach(i => {
-                let p = prds.find(x => x.name === i.prod);
-                let buyPrice = p ? (p.buy_price || 0) : 0;
-                let netQty = Math.max(0, i.qty - (i.ret || 0));
-                let revenue = netQty * i.pr;
-                let cost = i.qty * buyPrice; // خسارة الشراء شاملة التالف
-                profit += (revenue - cost);
+            if (!o.items || !Array.isArray(o.items)) return 0;
+            let p = 0;
+            o.items.forEach(it => {
+                let prd = prds.find(x => x.name === it.name);
+                let buy = prd ? (prd.buy_price || 0) : 0;
+                p += (it.price - buy) * it.qty;
             });
-            return profit;
+            return p;
         }
 
         function calcProfitAndStats() {
-            const todayStr = dt().split(' - ')[0];
-            let todaySales = 0;
-            let todayProfit = 0;
+            let totProfit = 0;
+            let totSales = 0;
+            const now = new Date();
+            const todayStr = now.getFullYear() + '/' + String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0');
 
             ords.forEach(o => {
-                if ((o.created_at || '').startsWith(todayStr)) {
-                    todaySales += (o.total_price || 0);
-                    todayProfit += calcOrderProfit(o);
+                if (o.created_at && o.created_at.startsWith(todayStr)) {
+                    totSales += (o.total_price || 0);
+                    totProfit += calcOrderProfit(o);
                 }
             });
 
-            const statSales = document.getElementById('stat-today-sales');
-            const statProfit = document.getElementById('stat-today-profit');
-            if (statSales) statSales.innerText = todaySales.toFixed(2) + ' DZD';
-            if (statProfit) statProfit.innerText = todayProfit.toFixed(2) + ' DZD';
+            const sProfit = document.getElementById('stat-today-profit');
+            const sSales = document.getElementById('stat-today-sales');
+            if(sProfit) sProfit.innerText = totProfit.toFixed(2) + ' DZD';
+            if(sSales) sSales.innerText = totSales.toFixed(2) + ' DZD';
         }
 
-        window.svClient = async function() {
-            let name = document.getElementById('c-name').value;
-            if(!name) return alert('يرجى إدخال اسم المحل');
-            let d = { name, ph: document.getElementById('c-ph').value, ad: document.getElementById('c-ad').value };
-            let res = eCID ? await dbClient.from('clients').update(d).eq('id', eCID) : await dbClient.from('clients').insert([d]);
-            if(res.error) alert('حدث خطأ: ' + res.error.message);
-            else { cm('client'); await fetchClients(); alert('تم الحفظ بنجاح!'); }
+        // تفاصيل الوصولات والسلع في صفحة وصل جديد
+        let orderRows = [];
+        function addRow(itemData = null) {
+            orderRows.push(itemData || { name: '', qty: 1, price: 0 });
+            renderRows();
+        }
+
+        function renderRows() {
+            const container = document.getElementById('o-rows');
+            if(!container) return;
+            container.innerHTML = orderRows.map((row, idx) => `
+                <div class="flex gap-2 items-center bg-slate-50 p-2 rounded-xl border">
+                    <select onchange="updateRowItem(${idx}, this.value)" class="flex-1 border p-2 rounded-lg text-xs md:text-sm bg-white">
+                        <option value="">اختر المنتوج...</option>
+                        ${prds.map(p => `<option value="${p.name}" ${p.name === row.name ? 'selected' : ''}>${p.name} (سعر: ${p.sel} دج - الستوك: ${p.stock})</option>`).join('')}
+                    </select>
+                    <input type="number" min="1" value="${row.qty}" oninput="updateRowQty(${idx}, this.value)" placeholder="الكمية" class="w-20 border p-2 rounded-lg text-xs md:text-sm font-mono" style="direction: ltr; text-align: right;">
+                    <input type="number" value="${row.price}" oninput="updateRowPrice(${idx}, this.value)" placeholder="السعر" class="w-24 border p-2 rounded-lg text-xs md:text-sm font-mono" style="direction: ltr; text-align: right;">
+                    <span class="w-24 text-left font-mono font-bold text-xs md:text-sm text-slate-700">${(row.qty * row.price).toFixed(2)} دج</span>
+                    <button type="button" onclick="removeRow(${idx})" class="bg-red-50 text-red-600 px-2.5 py-1.5 rounded-lg text-xs font-bold">🗑️</button>
+                </div>
+            `).join('');
+            calc();
+        }
+
+        window.updateRowItem = function(idx, val) {
+            orderRows[idx].name = val;
+            let prd = prds.find(p => p.name === val);
+            if(prd) {
+                orderRows[idx].price = prd.sel || 0;
+            }
+            renderRows();
         };
 
-        window.edCl = function(id, n, p, a) {
-            eCID = id; om('client');
+        window.updateRowQty = function(idx, val) {
+            orderRows[idx].qty = parseFloat(val) || 0;
+            calc();
+        };
+
+        window.updateRowPrice = function(idx, val) {
+            orderRows[idx].price = parseFloat(val) || 0;
+            calc();
+        };
+
+        window.removeRow = function(idx) {
+            orderRows.splice(idx, 1);
+            renderRows();
+        };
+
+        function calc() {
+            let tot = 0;
+            orderRows.forEach(r => tot += (r.qty * r.price));
+            const totEl = document.getElementById('o-tot');
+            const paidEl = document.getElementById('o-paid');
+            const debtEl = document.getElementById('o-debt');
+            
+            if(totEl) totEl.innerText = tot.toFixed(2) + ' DZD';
+            let paid = paidEl ? (parseFloat(paidEl.value) || 0) : 0;
+            let debt = Math.max(0, tot - paid);
+            if(debtEl) debtEl.innerText = debt.toFixed(2) + ' DZD';
+        }
+
+        window.clearOrderForm = function() {
+            const oc = document.getElementById('o-client');
+            const paid = document.getElementById('o-paid');
+            if(oc) oc.value = '';
+            if(paid) paid.value = '';
+            orderRows = [];
+            renderRows();
+        };
+
+        window.svOrder = async function(shouldPrint) {
+            const clientName = document.getElementById('o-client').value;
+            if(!clientName) { alert('الرجاء اختيار المحل التجاري!'); return; }
+            if(orderRows.length === 0) { alert('الرجاء إضافة سلعة واحدة على الأقل للوصل!'); return; }
+
+            let tot = 0;
+            orderRows.forEach(r => tot += (r.qty * r.price));
+            let paid = parseFloat(document.getElementById('o-paid').value) || 0;
+
+            // التحقق من المخزون
+            for(let r of orderRows) {
+                let prd = prds.find(p => p.name === r.name);
+                if(prd && (prd.stock || 0) < r.qty) {
+                    alert(`الكمية المطلوبة من (${r.name}) غير متوفرة في المخزون! المتبقي: ${prd.stock}`);
+                    return;
+                }
+            }
+
+            let did = Math.floor(1000 + Math.random() * 9000);
+            let newOrder = {
+                did: did,
+                client_name: clientName,
+                items: orderRows,
+                total_price: tot,
+                paid_amount: paid,
+                created_at: dt()
+            };
+
+            let { error } = await dbClient.from('orders').insert([newOrder]);
+            if(error) {
+                alert('حدث خطأ أثناء حفظ الوصل: ' + error.message);
+                return;
+            }
+
+            // خصم المخزون سحابياً
+            for(let r of orderRows) {
+                let prd = prds.find(p => p.name === r.name);
+                if(prd) {
+                    let newStock = Math.max(0, (prd.stock || 0) - r.qty);
+                    await dbClient.from('products').update({ stock: newStock }).eq('id', prd.id);
+                }
+            }
+
+            alert('تم حفظ الوصل بنجاح وتم تحديث المخزون ✅');
+            clearOrderForm();
+            await loadData();
+
+            if(shouldPrint) {
+                prn(newOrder);
+            }
+        };
+
+        // تسديد الدين مع التحديث الفوري المباشر
+        window.openPayDebt = function(clientName) {
+            selectedDebtClient = clientName;
+            document.getElementById('debt-client-name').innerText = 'المحل: ' + clientName;
+            document.getElementById('debt-pay-amount').value = '';
+            om('pay-debt');
+        };
+
+        window.confirmPayDebt = async function() {
+            let amount = parseFloat(document.getElementById('debt-pay-amount').value) || 0;
+            if(amount <= 0) { alert('الرجاء إدخال مبلغ صحيح للتسديد!'); return; }
+
+            let paymentOrder = {
+                did: Math.floor(1000 + Math.random() * 9000),
+                client_name: selectedDebtClient,
+                items: [{ name: 'تسديد دين سابق', qty: 1, price: 0 }],
+                total_price: 0,
+                paid_amount: -amount, // تسجيل الدفعة السالدة لتخفيض الدين فوراً في الحسابات
+                created_at: dt()
+            };
+
+            let { error } = await dbClient.from('orders').insert([paymentOrder]);
+            if(error) {
+                alert('خطأ في عملية التسديد: ' + error.message);
+                return;
+            }
+
+            cm('pay-debt');
+            alert('تم تسجيل عملية التسديد بنجاح وتحديث السجل ✅');
+            await loadData();
+        };
+
+        // إدارة المحلات والمنتجات
+        window.svClient = async function() {
+            let name = document.getElementById('c-name').value;
+            let ph = document.getElementById('c-ph').value;
+            let ad = document.getElementById('c-ad').value;
+            if(!name) { alert('أدخل اسم المحل'); return; }
+
+            if(eCID) {
+                await dbClient.from('clients').update({ name, ph, ad }).eq('id', eCID);
+            } else {
+                await dbClient.from('clients').insert([{ name, ph, ad }]);
+            }
+            cm('client');
+            loadData();
+        };
+
+        window.edCl = function(id, name, ph, ad) {
+            eCID = id;
             document.getElementById('mt-client').innerText = "تعديل بيانات المحل";
-            document.getElementById('c-name').value = n;
-            document.getElementById('c-ph').value = p;
-            document.getElementById('c-ad').value = a;
+            document.getElementById('c-name').value = name;
+            document.getElementById('c-ph').value = ph;
+            document.getElementById('c-ad').value = ad;
+            om('client');
         };
 
         window.delCl = async function(id) {
-            if(confirm('هل أنت متأكد من الحذف؟')) {
-                let { error } = await dbClient.from('clients').delete().eq('id', id);
-                if(error) alert('فشل الحذف: ' + error.message);
-                else fetchClients();
+            if(confirm('هل أنت متأكد من حذف هذا المحل؟')) {
+                await dbClient.from('clients').delete().eq('id', id);
+                loadData();
             }
         };
 
         window.svProduct = async function() {
             let name = document.getElementById('p-name').value;
             let bc = document.getElementById('p-bc').value;
-            let buy_price = Number(document.getElementById('p-buy').value) || 0;
-            let sel = Number(document.getElementById('p-sel').value) || 0;
-            let stock = Number(document.getElementById('p-stock').value) || 0;
+            let buy_price = parseFloat(document.getElementById('p-buy').value) || 0;
+            let sel = parseFloat(document.getElementById('p-sel').value) || 0;
+            let stock = parseInt(document.getElementById('p-stock').value) || 0;
             let exp = document.getElementById('p-exp').value;
-            if(!name) return alert('يرجى إدخال اسم المنتوج');
-            let d = { name, bc, buy_price, sel, stock, exp };
-            let res = ePID ? await dbClient.from('products').update(d).eq('id', ePID) : await dbClient.from('products').insert([d]);
-            if(res.error) alert('حدث خطأ: ' + res.error.message);
-            else { cm('product'); await fetchProducts(); alert('تم حفظ المنتج والمخزون!'); }
+
+            if(!name) { alert('أدخل اسم المنتوج'); return; }
+
+            if(ePID) {
+                await dbClient.from('products').update({ name, bc, buy_price, sel, stock, exp }).eq('id', ePID);
+            } else {
+                await dbClient.from('products').insert([{ name, bc, buy_price, sel, stock, exp }]);
+            }
+            cm('product');
+            loadData();
         };
 
-        window.edPr = function(id, n, b, buy, s, st, x) {
-            ePID = id; om('product');
-            document.getElementById('mt-product').innerText = "تعديل المنتج والمخزون";
-            document.getElementById('p-name').value = n;
-            document.getElementById('p-bc').value = b;
-            document.getElementById('p-buy').value = buy;
-            document.getElementById('p-sel').value = s;
-            document.getElementById('p-stock').value = st;
-            document.getElementById('p-exp').value = x;
+        window.edPr = function(id, name, bc, buy_price, sel, stock, exp) {
+            ePID = id;
+            document.getElementById('mt-product').innerText = "تعديل المنتوج والمخزون";
+            document.getElementById('p-name').value = name;
+            document.getElementById('p-bc').value = bc;
+            document.getElementById('p-buy').value = buy_price;
+            document.getElementById('p-sel').value = sel;
+            document.getElementById('p-stock').value = stock;
+            document.getElementById('p-exp').value = exp;
+            om('product');
         };
 
         window.delPr = async function(id) {
-            if(confirm('هل أنت متأكد من الحذف؟')) {
-                let { error } = await dbClient.from('products').delete().eq('id', id);
-                if(error) alert('فشل الحذف: ' + error.message);
-                else fetchProducts();
-            }
-        };
-
-        window.addRow = function(pName = "", qty = "", pr = "", ret = "") {
-            let c = document.getElementById('o-rows');
-            if(!c) return;
-            let opts = '<option value="">اختر السلعة...</option>' + prds.map(p => `<option value="${p.name}" data-price="${p.sel}" ${p.name === pName ? 'selected' : ''}>${p.name} (المتبقي: ${p.stock||0})</option>`).join('');
-            let r = document.createElement('div');
-            r.className = "flex flex-col gap-2 bg-slate-50 p-3 rounded-xl border orow";
-            r.innerHTML = `
-                <div class="flex gap-2">
-                    <select class="border p-2 rounded-lg text-xs flex-1 bg-white osel" onchange="upPr(this)">${opts}</select>
-                    <button type="button" onclick="this.closest('.orow').remove(); calc();" class="text-red-600 font-bold px-2 text-sm bg-red-50 rounded">✕</button>
-                </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <div>
-                        <label class="text-[10px] text-slate-500 block">الكمية المسلمة</label>
-                        <input type="number" placeholder="الكمية" value="${qty || 1}" class="border p-2 rounded-lg text-xs w-full oqty bg-white font-mono" style="direction: ltr; text-align: right;" oninput="calc()">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-slate-500 block">السعر للوحدة</label>
-                        <input type="number" placeholder="السعر" value="${pr}" class="border p-2 rounded-lg text-xs w-full bg-slate-100 opr font-mono" style="direction: ltr; text-align: right;" oninput="calc()">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-red-600 font-bold block">المرتجعات (تالف/كسر)</label>
-                        <input type="number" placeholder="مرتجع" value="${ret || 0}" class="border p-2 rounded-lg text-xs w-full oret bg-red-50 text-red-700 font-bold font-mono" style="direction: ltr; text-align: right;" oninput="calc()">
-                    </div>
-                </div>
-            `;
-            c.appendChild(r);
-            calc();
-        };
-
-        window.upPr = function(sel) {
-            let row = sel.closest('.orow');
-            let price = sel.selectedOptions[0].getAttribute('data-price') || 0;
-            row.querySelector('.opr').value = price;
-            calc();
-        };
-
-        window.calc = function() {
-            let t = 0;
-            document.querySelectorAll('.orow').forEach(r => {
-                let q = Number(r.querySelector('.oqty').value) || 0;
-                let p = Number(r.querySelector('.opr').value) || 0;
-                let ret = Number(r.querySelector('.oret').value) || 0;
-                let netQty = Math.max(0, q - ret);
-                t += netQty * p;
-            });
-
-            let paid = Number(document.getElementById('o-paid').value) || 0;
-            let debt = Math.max(0, t - paid);
-
-            const totEl = document.getElementById('o-tot');
-            const debtEl = document.getElementById('o-debt');
-
-            if(totEl) totEl.innerText = t.toFixed(2) + ' DZD';
-            if(debtEl) debtEl.innerText = debt.toFixed(2) + ' DZD';
-        };
-
-        window.clearOrderForm = function() {
-            eOID = null;
-            document.getElementById('o-client').value = '';
-            document.getElementById('o-paid').value = '';
-            document.getElementById('o-rows').innerHTML = '';
-            addRow();
-            calc();
-        };
-
-        window.svOrder = async function(print) {
-            let clientName = document.getElementById('o-client').value;
-            if(!clientName) return alert('اختر المحل أولاً!');
-            
-            let items = [];
-            let stockCheckOk = true;
-
-            document.querySelectorAll('.orow').forEach(r => {
-                let prod = r.querySelector('.osel').value;
-                let qty = Number(r.querySelector('.oqty').value);
-                let pr = Number(r.querySelector('.opr').value);
-                let ret = Number(r.querySelector('.oret').value) || 0;
-                
-                let p = prds.find(x => x.name === prod);
-                if (p && p.stock < qty) {
-                    alert(`الكمية المطلوبة من (${prod}) وهي ${qty} أكبر من الكمية المتبقية في المخزون (${p.stock})!`);
-                    stockCheckOk = false;
-                }
-
-                if(prod && qty > 0) items.push({ prod, qty, pr, ret });
-            });
-
-            if (!stockCheckOk) return;
-            if(items.length === 0) return alert('أضف سلعة واحدة على الأقل!');
-            
-            let totalPrice = items.reduce((sum, i) => sum + ((i.qty - i.ret) * i.pr), 0);
-            let paidAmount = Number(document.getElementById('o-paid').value) || totalPrice;
-
-            let did = Math.floor(1000 + Math.random() * 9000);
-            let data = { did, client_name: clientName, items, total_price: totalPrice, paid_amount: paidAmount, created_at: dt() };
-
-            let res = await dbClient.from('orders').insert([data]);
-
-            if(res.error) {
-                alert('حدث خطأ: ' + res.error.message);
-            } else {
-                // خصم تلقائي من المخزون
-                for (let item of items) {
-                    let p = prds.find(x => x.name === item.prod);
-                    if (p) {
-                        let newStock = Math.max(0, (p.stock || 0) - item.qty);
-                        await dbClient.from('products').update({ stock: newStock }).eq('id', p.id);
-                    }
-                }
-
-                clearOrderForm();
-                if(print) prn(data);
-                await fetchProducts();
-                await fetchOrders();
-                alert('تم حفظ الوصل وخصم الكميات من المخزون بنجاح!');
-            }
-        };
-
-        window.openPayDebt = function(clientName) {
-            selectedDebtClient = clientName;
-            document.getElementById('debt-client-name').innerText = `المحل: ${clientName}`;
-            document.getElementById('debt-pay-amount').value = '';
-            om('pay-debt');
-        };
-
-        window.confirmPayDebt = async function() {
-            let amount = Number(document.getElementById('debt-pay-amount').value);
-            if (!amount || amount <= 0) return alert('ادخل مبلغ صحيح للتسديد');
-
-            // إضافة وصل تسديد في الأرشيف
-            let did = Math.floor(1000 + Math.random() * 9000);
-            let data = { did, client_name: selectedDebtClient, items: [{ prod: 'تسديد دين سابق', qty: 1, pr: 0, ret: 0 }], total_price: 0, paid_amount: amount, created_at: dt() };
-            
-            let res = await dbClient.from('orders').insert([data]);
-            if (!res.error) {
-                cm('pay-debt');
-                await fetchOrders();
-                alert('تم تسجيل تسديد الدين وتحديث الحساب بنجاح!');
-            } else {
-                alert('حدث خطأ أثناء التسديد: ' + res.error.message);
+            if(confirm('هل أنت متأكد من حذف هذا المنتوج؟')) {
+                await dbClient.from('products').delete().eq('id', id);
+                loadData();
             }
         };
 
         window.delOr = async function(id) {
-            if(confirm('هل أنت متأكد من الحذف؟')) {
-                let { error } = await dbClient.from('orders').delete().eq('id', id);
-                if(error) alert('فشل الحذف: ' + error.message);
-                else fetchOrders();
+            if(confirm('هل أنت متأكد من حذف هذا الوصل نهائياً؟')) {
+                await dbClient.from('orders').delete().eq('id', id);
+                loadData();
             }
         };
 
         window.filArchive = function() {
             let q = document.getElementById('srch-archive').value.toLowerCase();
-            rOrds(ords.filter(o => (o.created_at || '').toLowerCase().includes(q) || (o.client_name || '').toLowerCase().includes(q) || (String(o.did)).includes(q)));
+            let filtered = ords.filter(o => (o.client_name && o.client_name.toLowerCase().includes(q)) || (o.did && o.did.toString().includes(q)));
+            rOrds(filtered);
         };
 
         window.prn = function(o) {
-            let pw = window.open('', '_blank', 'width=800,height=600');
             let debt = Math.max(0, (o.total_price || 0) - (o.paid_amount || 0));
-            pw.document.write(`
-                <html dir="rtl">
+            let w = window.open('', '_blank');
+            w.document.write(`
+                <html lang="ar" dir="rtl">
                 <head>
-                    <meta charset="UTF-8">
-                    <title>وصل تسليم بضاعة #${o.did || ''}</title>
+                    <title>وصل توزيع - #BL-${o.did}</title>
                     <style>
-                        body{ font-family: 'Segoe UI', Tahoma, sans-serif; padding: 20px; direction: rtl; color: #1e293b; }
-                        .header{ text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px; }
-                        .title{ font-size: 20px; font-weight: bold; color: #0f172a; }
-                        .sub-title{ font-size: 13px; color: #475569; margin-top: 4px; }
-                        .box{ display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 15px; background: #f8fafc; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
-                        table{ width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-                        th, td{ border: 1px solid #94a3b8; padding: 9px; text-align: center; font-size: 12px; }
-                        th{ background: #f1f5f9; font-weight: bold; }
-                        .total-box{ margin-top: 15px; background: #ecfdf5; padding: 12px; border-radius: 6px; border: 1px solid #10b981; font-size: 14px; }
-                        .footer{ margin-top: 30px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
+                        body { font-family: 'Cairo', sans-serif; padding: 20px; color: #111; max-width: 400px; margin: auto; }
+                        .center { text-align: center; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                        th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: right; font-size: 12px; }
+                        .bold { font-weight: bold; }
                     </style>
                 </head>
                 <body>
-                    <div class="header">
-                        <div class="title">مؤسسة توزيع بيض العرب، السمان واللحوم المجمدة</div>
-                        <div class="sub-title">هاتف المورد: <b>0555688855</b></div>
+                    <div class="center">
+                        <h2>مؤسسة توزيع البيض والسمان</h2>
+                        <p style="font-size: 11px; margin: 2px;">الهاتف: 0555688855</p>
+                        <hr>
                     </div>
-                    <div class="box">
-                        <div>رقم الوصل: <b style="direction: ltr; display: inline-block;">#BL-${o.did || ''}</b></div>
-                        <div>التاريخ والوقت: <b style="direction: ltr; display: inline-block;">${o.created_at || ''}</b></div>
-                        <div>المحل المستفيد: <b>${o.client_name || ''}</b></div>
-                    </div>
+                    <p class="bold">رقم الوصل: #BL-${o.did}</p>
+                    <p class="bold">التاريخ: ${o.created_at}</p>
+                    <p class="bold">المحل التجاري: ${o.client_name}</p>
                     <table>
                         <thead>
                             <tr>
-                                <th>السلعة</th>
+                                <th>المنتوج</th>
                                 <th>الكمية</th>
-                                <th>المرتجعات (تالف/كسر)</th>
-                                <th>الكمية الصافية</th>
-                                <th>السعر الفردي</th>
-                                <th>الإجمالي الصافي</th>
+                                <th>السعر</th>
+                                <th>المجموع</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${(o.items || []).map(i => {
-                                let netQ = Math.max(0, i.qty - (i.ret || 0));
-                                let lineTot = netQ * i.pr;
-                                return `<tr>
-                                    <td><b>${i.prod}</b></td>
-                                    <td style="direction: ltr;">${i.qty}</td>
-                                    <td style="color: #dc2626; direction: ltr;">${i.ret || 0}</td>
-                                    <td style="direction: ltr;"><b>${netQ}</b></td>
-                                    <td style="direction: ltr;">${i.pr} DZD</td>
-                                    <td style="direction: ltr;"><b>${lineTot.toFixed(2)} DZD</b></td>
-                                </tr>`;
-                            }).join('')}
+                            ${(o.items || []).map(i => `<tr><td>${i.name}</td><td>${i.qty}</td><td>${i.price} دج</td><td>${i.qty * i.price} دج</td></tr>`).join('')}
                         </tbody>
                     </table>
-                    
-                    <div class="total-box">
-                        <div style="display: flex; justify-content: space-between;"><span>الإجمالي الكلي للوصل:</span> <b>${(o.total_price || 0).toFixed(2)} DZD</b></div>
-                        <div style="display: flex; justify-content: space-between; color: #047857;"><span>المبلغ المدفوع كاش:</span> <b>${(o.paid_amount || 0).toFixed(2)} DZD</b></div>
-                        <div style="display: flex; justify-content: space-between; color: #dc2626;"><span>الباقي (دين مسجل):</span> <b>${debt.toFixed(2)} DZD</b></div>
+                    <div style="margin-top: 15px; font-size: 13px;">
+                        <p>الإجمالي: <span class="bold">${o.total_price} دج</span></p>
+                        <p>المدفوع كاش: <span class="bold">${o.paid_amount} دج</span></p>
+                        <p style="color: red;">الباقي (دين): <span class="bold">${debt.toFixed(2)} دج</span></p>
                     </div>
-                    
-                    <div class="footer">
-                        <div>إمضاء وختم المورد: 0555688855</div>
-                        <div>إمضاء المستلم (المحل): ........................</div>
+                    <div class="center" style="margin-top: 30px; font-size: 11px;">
+                        <p>شكراً لتعاملكم معنا!</p>
                     </div>
-
-                    <script>window.onload = () => { window.print(); };<\/script>
+                    <script>window.print();<\/script>
                 </body>
                 </html>
             `);
-            pw.document.close();
+            w.document.close();
         };
 
+        // الكاميرا للباركود
         window.startScanner = function(target) {
             scanTarget = target;
-            document.getElementById('m-scanner').classList.remove('hidden');
-            document.getElementById('m-scanner').classList.add('flex');
+            om('scanner');
             html5QrcodeScanner = new Html5Qrcode("interactive");
             html5QrcodeScanner.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 220, height: 140 } },
-                (decodedText) => { onScanSuccess(decodedText); stopScanner(); },
+                { fps: 10, qrbox: { width: 250, height: 150 } },
+                (decodedText, decodedResult) => {
+                    stopScanner();
+                    if(scanTarget === 'product') {
+                        document.getElementById('p-bc').value = decodedText;
+                    } else if(scanTarget === 'order') {
+                        let prd = prds.find(p => p.bc === decodedText);
+                        if(prd) {
+                            addRow({ name: prd.name, qty: 1, price: prd.sel });
+                        } else {
+                            alert('لم يتم العثور على أي منتوج بهذا الباركود: ' + decodedText);
+                        }
+                    }
+                },
                 (errorMessage) => {}
-            );
+            ).catch((err) => {
+                alert("تعذر تشغيل الكاميرا: " + err);
+                cm('scanner');
+            });
         };
 
         window.stopScanner = function() {
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.stop().catch(() => {}).finally(() => {
-                    document.getElementById('m-scanner').classList.remove('flex');
-                    document.getElementById('m-scanner').classList.add('hidden');
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    cm('scanner');
+                }).catch(err => {
+                    cm('scanner');
                 });
             } else {
-                document.getElementById('m-scanner').classList.remove('flex');
-                document.getElementById('m-scanner').classList.add('hidden');
+                cm('scanner');
             }
         };
-
-        function onScanSuccess(barcode) {
-            if (scanTarget === 'product') {
-                document.getElementById('p-bc').value = barcode;
-            } else if (scanTarget === 'order') {
-                let p = prds.find(x => x.bc === barcode);
-                if (p) addRow(p.name, 1, p.sel, 0);
-                else alert(`الباركود (${barcode}) غير مسجل!`);
-            }
-        }
-
-        addRow();
     </script>
 </body>
 </html>
