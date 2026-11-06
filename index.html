@@ -121,7 +121,6 @@
                             </tr>
                         </thead>
                         <tbody id="order-items-tbody" class="divide-y divide-slate-100 text-sm">
-                            <!-- المخرجات تظهر هنا -->
                         </tbody>
                     </table>
                 </div>
@@ -346,6 +345,13 @@
             });
         }
 
+        async function deleteProduct(id) {
+            if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+                await supabaseClient.from('products').delete().eq('id', id);
+                location.reload();
+            }
+        }
+
         function autoFillPrice() {}
 
         function addItemToOrder() {
@@ -472,11 +478,16 @@
             const tbody = document.getElementById('archive-tbody');
             tbody.innerHTML = '';
             let todaySales = 0;
+            let todayProfit = 0;
 
             (data || []).forEach(o => {
                 let d = new Date(o.created_at);
                 if (d.toDateString() === new Date().toDateString()) {
                     todaySales += (o.total_amount || 0);
+                    // حساب الأرباح التقريبية بناءً على الوصولات اليومية
+                    if (o.total_amount > 0) {
+                        todayProfit += (o.total_amount * 0.2); // نسبة تقديرية للأرباح أو صافي التكلفة
+                    }
                 }
                 tbody.innerHTML += `
                     <tr>
@@ -490,6 +501,7 @@
                 `;
             });
             document.getElementById('today-sales-val').innerText = `${todaySales.toFixed(2)} DZD`;
+            document.getElementById('today-profit-val').innerText = `${todayProfit.toFixed(2)} DZD`;
         }
 
         async function loadDebts() {
@@ -520,7 +532,7 @@
             });
         }
 
-        // دالة تسديد الديون المحدثة
+        // دالة تسديد الديون مع التحديث الفوري لإخفاء المبلغ
         async function payDebt(clientName, currentDebt) {
             let inputAmount = prompt(`الدين الحالي على المحل (${clientName}) هو: ${currentDebt} دج.\nأدخل المبلغ المراد تسديده:`, currentDebt);
             
@@ -552,3 +564,4 @@
     </script>
 </body>
 </html>
+
