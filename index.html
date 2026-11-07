@@ -622,7 +622,7 @@
             }
         };
 
-        // تسديد الدين بشكل صحيح ومضبوط
+        // دالة تسديد الدين الصحيحة والمضبوطة تماماً لتخفيض الدين واختفائه
         window.openPayDebt = function(clientName, currentDebt) {
             selectedDebtClient = clientName;
             document.getElementById('debt-client-name').innerText = 'المحل: ' + clientName + ' (الدين الحالي: ' + currentDebt.toFixed(2) + ' دج)';
@@ -634,13 +634,13 @@
             let amount = parseFloat(document.getElementById('debt-pay-amount').value) || 0;
             if(amount <= 0) { alert('الرجاء إدخال مبلغ صحيح للتسديد!'); return; }
 
-            // تسجيل الدفعة كـ total_price = 0 و paid_amount = amount لكي ينخفض الدين في الحسابات تلقائياً
+            // التعديل الجذري: جعل total_price سالب (أو خصم القيمة مباشرة) لكي يتم طرح المبلغ المدفوع من إجمالي الدين الحالي
             let paymentOrder = {
                 did: Math.floor(1000 + Math.random() * 9000),
                 client_name: selectedDebtClient,
                 items: [{ name: 'تسديد دين سابق', qty: 1, price: 0 }],
-                total_price: 0,
-                paid_amount: amount, 
+                total_price: -amount, 
+                paid_amount: 0, 
                 created_at: dt()
             };
 
@@ -651,7 +651,7 @@
             }
 
             cm('pay-debt');
-            alert('تم تسجيل عملية التسديد بنجاح وتحديث السجل ✅');
+            alert('تم تسجيل عملية التسديد بنجاح وتم إسقاط المبلغ من الديون ✅');
             await loadData();
         };
 
