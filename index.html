@@ -467,7 +467,7 @@
                 <td class="p-3 font-mono text-xs">${d.client.ph || 'غير محدد'}</td>
                 <td class="p-3 font-bold font-mono ${d.debt > 0 ? 'text-red-600' : 'text-emerald-600'}" style="direction: ltr; text-align: right;">${d.debt.toFixed(2)} DZD</td>
                 <td class="p-3 text-center">
-                    ${d.debt > 0 ? `<button type="button" onclick="openPayDebt('${d.client.name}')" class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-bold">💵 تسديد جزء/كل الدين</button>` : `<span class="text-xs text-emerald-600 font-bold">لا توجد ديون ✅</span>`}
+                    ${d.debt > 0 ? `<button type="button" onclick="openPayDebt('${d.client.name}', ${d.debt})" class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-bold">💵 تسديد جزء/كل الدين</button>` : `<span class="text-xs text-emerald-600 font-bold">لا توجد ديون ✅</span>`}
                 </td>
             </tr>`).join('');
         }
@@ -502,7 +502,6 @@
             if(sSales) sSales.innerText = totSales.toFixed(2) + ' DZD';
         }
 
-        // تفاصيل الوصولات والسلع في صفحة وصل جديد
         let orderRows = [];
         function addRow(itemData = null) {
             orderRows.push(itemData || { name: '', qty: 1, price: 0 });
@@ -582,7 +581,6 @@
             orderRows.forEach(r => tot += (r.qty * r.price));
             let paid = parseFloat(document.getElementById('o-paid').value) || 0;
 
-            // التحقق من المخزون
             for(let r of orderRows) {
                 let prd = prds.find(p => p.name === r.name);
                 if(prd && (prd.stock || 0) < r.qty) {
@@ -607,7 +605,6 @@
                 return;
             }
 
-            // خصم المخزون سحابياً
             for(let r of orderRows) {
                 let prd = prds.find(p => p.name === r.name);
                 if(prd) {
@@ -625,11 +622,11 @@
             }
         };
 
-        // تسديد الدين مع التحديث الفوري المباشر
-        window.openPayDebt = function(clientName) {
+        // تسديد الدين بشكل صحيح ومضبوط
+        window.openPayDebt = function(clientName, currentDebt) {
             selectedDebtClient = clientName;
-            document.getElementById('debt-client-name').innerText = 'المحل: ' + clientName;
-            document.getElementById('debt-pay-amount').value = '';
+            document.getElementById('debt-client-name').innerText = 'المحل: ' + clientName + ' (الدين الحالي: ' + currentDebt.toFixed(2) + ' دج)';
+            document.getElementById('debt-pay-amount').value = currentDebt;
             om('pay-debt');
         };
 
@@ -637,12 +634,13 @@
             let amount = parseFloat(document.getElementById('debt-pay-amount').value) || 0;
             if(amount <= 0) { alert('الرجاء إدخال مبلغ صحيح للتسديد!'); return; }
 
+            // تسجيل الدفعة كـ total_price = 0 و paid_amount = amount لكي ينخفض الدين في الحسابات تلقائياً
             let paymentOrder = {
                 did: Math.floor(1000 + Math.random() * 9000),
                 client_name: selectedDebtClient,
                 items: [{ name: 'تسديد دين سابق', qty: 1, price: 0 }],
                 total_price: 0,
-                paid_amount: -amount, // تسجيل الدفعة السالدة لتخفيض الدين فوراً في الحسابات
+                paid_amount: amount, 
                 created_at: dt()
             };
 
@@ -657,7 +655,6 @@
             await loadData();
         };
 
-        // إدارة المحلات والمنتجات
         window.svClient = async function() {
             let name = document.getElementById('c-name').value;
             let ph = document.getElementById('c-ph').value;
@@ -792,7 +789,6 @@
             w.document.close();
         };
 
-        // الكاميرا للباركود
         window.startScanner = function(target) {
             scanTarget = target;
             om('scanner');
