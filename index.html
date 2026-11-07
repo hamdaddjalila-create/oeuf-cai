@@ -186,7 +186,7 @@
                                     <th class="p-3">اسم المحل</th>
                                     <th class="p-3">الهاتف</th>
                                     <th class="p-3">إجمالي الديون المتبقية</th>
-                                    <th class="p-3 text-center">تسديد دين</th>
+                                    <th class="p-3 text-center">تسديد دين / إزالة</th>
                                 </tr>
                             </thead>
                             <tbody id="tb-debts" class="divide-y text-xs md:text-sm"></tbody>
@@ -422,9 +422,7 @@
 
         window.rOrds = function(list = ords) {
             const tb = document.getElementById('tb-orders');
-            // استبعاد وصولات التسديد الصافية من الأرشيف لكي لا تظهر كعمليات بيع وهمية
-            const validOrders = list.filter(o => !(o.items && o.items.length === 1 && o.items[0].name === 'تسديد دين سابق'));
-            if(tb) tb.innerHTML = [...validOrders].reverse().map(o => {
+            if(tb) tb.innerHTML = [...list].reverse().map(o => {
                 let profit = calcOrderProfit(o);
                 let debt = Math.max(0, (o.total_price || 0) - (o.paid_amount || 0));
                 return `<tr>
@@ -443,17 +441,21 @@
             }).join('');
         };
 
+        // دالة عرض الديون مع إضافة زر الحذف 🗑️ للمحلات التي سددت ديونها بالكامل
         function rDebts() {
             const tb = document.getElementById('tb-debts');
             if(!tb) return;
 
             let debtsMap = {};
-            cls.forEach(c => debtsMap[c.name] = { client: c, debt: 0 });
+            cls.forEach(c => debtsMap[c.name] = { client: c, debt: 0, orders: [] });
 
             ords.forEach(o => {
                 let debt = Math.max(0, (o.total_price || 0) - (o.paid_amount || 0));
                 if (debtsMap[o.client_name]) {
                     debtsMap[o.client_name].debt += debt;
+                    if(debt > 0) {
+                        debtsMap[o.client_name].orders.push(o.id);
+                    }
                 }
             });
 
@@ -462,10 +464,25 @@
                 <td class="p-3 font-mono text-xs">${d.client.ph || 'غير محدد'}</td>
                 <td class="p-3 font-bold font-mono ${d.debt > 0 ? 'text-red-600' : 'text-emerald-600'}" style="direction: ltr; text-align: right;">${d.debt.toFixed(2)} DZD</td>
                 <td class="p-3 text-center">
-                    ${d.debt > 0 ? `<button type="button" onclick="openPayDebt('${d.client.name}', ${d.debt})" class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-bold">💵 تسديد جزء/كل الدين</button>` : `<span class="text-xs text-emerald-600 font-bold">لا توجد ديون ✅</span>`}
+                    ${d.debt > 0 ? 
+                        `<button type="button" onclick="openPayDebt('${d.client.name}', ${d.debt})" class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-bold">💵 تسديد جزء/كل الدين</button>` : 
+                        `<button type="button" onclick="clearZeroDebtOrders('${d.client.name}')" class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 mx-auto">🗑️ إزالة من القائمة</button>`
+                    }
                 </td>
             </tr>`).join('');
         }
+
+        // دالة حذف أو أرشفة الوصل المسدد تماماً لكي يختفي من سجل الديون
+        window.clearZeroDebtOrders = async function(clientName) {
+            if(confirm(`هل تريد إزالة سجل ديون (${clientName}) المصفّر من القائمة نهائياً؟`)) {
+                let targetOrders = ords.filter(o => o.client_name === clientName && ((o.total_price || 0) - (o.paid_amount || 0)) <= 0);
+                for(let ord of targetOrders) {
+                    await dbClient.from('orders').delete().eq('id', ord.id);
+                }
+                alert('تمت الإزالة بنجاح ✅');
+                await loadData();
+            }
+        };
 
         function calcOrderProfit(o) {
             if (!o.items || !Array.isArray(o.items)) return 0;
@@ -485,8 +502,7 @@
             const todayStr = now.getFullYear() + '/' + String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0');
 
             ords.forEach(o => {
-                // استبعاد حركات التسديد من حساب المبيعات اليومية لكي لا تؤثر على الأرباح
-                if (o.created_at && o.created_at.startsWith(todayStr) && !(o.items && o.items.length === 1 && o.items[0].name === 'تسديد دين سابق')) {
+                if (o.created_at && o.created_at.startsWith(todayStr)) {
                     totSales += (o.total_price || 0);
                     totProfit += calcOrderProfit(o);
                 }
@@ -597,7 +613,6 @@
             if(shouldPrint) prn(newOrder);
         };
 
-        // دالة تسديد الدين المحدثة: تقوم بتحديث الوصل الأصلي وتصفير الدين فوراً ودون تركه في الأرشيف
         window.openPayDebt = function(clientName, currentDebt) {
             selectedDebtClient = clientName;
             document.getElementById('debt-client-name').innerText = 'المحل: ' + clientName + ' (الدين الحالي: ' + currentDebt.toFixed(2) + ' دج)';
@@ -609,7 +624,6 @@
             let payAmount = parseFloat(document.getElementById('debt-pay-amount').value) || 0;
             if(payAmount <= 0) { alert('الرجاء إدخال مبلغ صحيح للتسديد!'); return; }
 
-            // البحث عن الوصولات الخاصة بهذا المحل والتي يوجد عليها دين غير مدفوع بالكامل
             let targetOrders = ords.filter(o => o.client_name === selectedDebtClient && ((o.total_price || 0) - (o.paid_amount || 0)) > 0);
 
             if(targetOrders.length === 0) {
@@ -618,27 +632,23 @@
                 return;
             }
 
-            // تحديث الوصل (أو الوصولات) الأقدم لإضافة المبلغ المدفوع وجعل الدين يختفي
             let remainingToPay = payAmount;
             for(let ord of targetOrders) {
                 if(remainingToPay <= 0) break;
                 let currentDebtOnOrder = (ord.total_price || 0) - (ord.paid_amount || 0);
-                
                 let amountToApply = Math.min(remainingToPay, currentDebtOnOrder);
                 let newPaidAmount = (ord.paid_amount || 0) + amountToApply;
 
-                // تحديث المدفوع في جدول orders سحابياً
                 let { error } = await dbClient.from('orders').update({ paid_amount: newPaidAmount }).eq('id', ord.id);
                 if(error) {
                     alert('خطأ أثناء تحديث السداد: ' + error.message);
                     return;
                 }
-
                 remainingToPay -= amountToApply;
             }
 
             cm('pay-debt');
-            alert('تم تسجيل عملية التسديد بنجاح واختفاء المبلغ من ديون المحل ✅');
+            alert('تم تسجيل عملية التسديد بنجاح ✅');
             await loadData();
         };
 
