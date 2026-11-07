@@ -51,7 +51,6 @@
                 
                 <!-- 1. قسم كتابة الوصل -->
                 <div id="v-orders" class="sec space-y-4">
-                    <!-- كرت ملخص أرباح اليوم -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="bg-emerald-600 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
                             <div>
@@ -84,7 +83,6 @@
                             </div>
                         </div>
 
-                        <!-- جدول السلع والمرتجعات -->
                         <div class="border-t border-b py-3 space-y-3">
                             <div class="flex justify-between items-center">
                                 <span class="font-bold text-xs md:text-sm">تفاصيل السلع والمرتجعات:</span>
@@ -93,7 +91,6 @@
                             <div id="o-rows" class="space-y-2"></div>
                         </div>
 
-                        <!-- حساب الديون والدفع -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border">
                             <div>
                                 <label class="block text-xs font-bold text-slate-600 mb-1">إجمالي الوصل:</label>
@@ -109,13 +106,11 @@
                             </div>
                         </div>
 
-                        <!-- إجمالي التاريخ -->
                         <div class="flex justify-between items-center text-xs text-slate-500">
                             <span>التاريخ والوقت:</span>
                             <span id="current-time-display" class="font-mono font-bold text-slate-700" style="direction: ltr;">--/--/---- --:--</span>
                         </div>
 
-                        <!-- أزرار الحفظ -->
                         <div class="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                             <button type="button" onclick="clearOrderForm()" class="w-full sm:w-auto bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold">إلغاء</button>
                             <button type="button" onclick="svOrder(false)" class="w-full sm:w-auto bg-amber-600 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-amber-700">💾 حفظ الوصل والخصم من المخزون</button>
@@ -237,7 +232,7 @@
         </div>
     </div>
 
-    <!-- نافذة منتج مع الشراء والمخزون -->
+    <!-- نافذة منتج -->
     <div id="m-product" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl">
             <h3 id="mt-product" class="text-base font-bold">إضافة منتوج جديد للمخزون</h3>
@@ -248,25 +243,25 @@
             </div>
             <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 mb-1">ثمن الشراء (تكلفة الوحدة):</label>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-1">ثمن الشراء:</label>
                     <input type="number" id="p-buy" placeholder="سعر الشراء DZD" class="w-full border p-2.5 rounded-xl text-xs md:text-sm font-mono">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 mb-1">ثمن البيع للمحلات:</label>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-1">ثمن البيع:</label>
                     <input type="number" id="p-sel" placeholder="سعر البيع DZD" class="w-full border p-2.5 rounded-xl text-xs md:text-sm font-mono">
                 </div>
             </div>
             <div>
-                <label class="block text-[10px] font-bold text-slate-500 mb-1">الكمية الإعدادية في المخزون (الستوك):</label>
-                <input type="number" id="p-stock" placeholder="الكمية المتوفرة حالياً" class="w-full border p-2.5 rounded-xl text-xs md:text-sm font-mono">
+                <label class="block text-[10px] font-bold text-slate-500 mb-1">الكمية المتوفرة:</label>
+                <input type="number" id="p-stock" placeholder="الكمية" class="w-full border p-2.5 rounded-xl text-xs md:text-sm font-mono">
             </div>
             <div>
-                <label class="block text-[10px] font-bold text-slate-500 mb-1">تاريخ الصلاحية / الانتهاء:</label>
+                <label class="block text-[10px] font-bold text-slate-500 mb-1">تاريخ الصلاحية:</label>
                 <input type="date" id="p-exp" class="w-full border p-2.5 rounded-xl text-xs md:text-sm font-mono">
             </div>
             <div class="flex justify-end gap-2">
                 <button type="button" onclick="cm('product')" class="bg-slate-200 px-4 py-2 rounded-xl text-xs font-bold">إلغاء</button>
-                <button type="button" onclick="svProduct()" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold">حفظ المنتوج والمخزون</button>
+                <button type="button" onclick="svProduct()" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold">حفظ</button>
             </div>
         </div>
     </div>
@@ -303,7 +298,7 @@
         const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let cls = [], prds = [], ords = [];
-        let eCID = null, ePID = null, eOID = null, selectedDebtClient = null;
+        let eCID = null, ePID = null, selectedDebtClient = null;
         let html5QrcodeScanner = null;
         let scanTarget = 'order';
 
@@ -394,18 +389,16 @@
 
         function getExpBadge(expDateStr) {
             if (!expDateStr) return `<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs">غير محدد</span>`;
-            
             const now = new Date();
             const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
             const today = new Date(todayStr);
             const expDate = new Date(expDateStr);
-            const diffTime = expDate - today;
-            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = Math.round((expDate - today) / (1000 * 60 * 60 * 24));
 
-            if (diffDays < 0) return `<span class="bg-red-100 text-red-700 font-bold px-2.5 py-1 rounded-full text-xs font-mono" style="direction: ltr; display: inline-block;">⚠️ منتهي (${expDateStr})</span>`;
-            if (diffDays === 0) return `<span class="bg-red-500 text-white font-bold px-2.5 py-1 rounded-full text-xs font-mono animate-pulse" style="direction: ltr; display: inline-block;">🔥 ينتهي اليوم! (${expDateStr})</span>`;
-            if (diffDays <= 7) return `<span class="bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full text-xs font-mono" style="direction: ltr; display: inline-block;">⏳ ينتهي بعد ${diffDays} أيام</span>`;
-            return `<span class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full text-xs font-mono" style="direction: ltr; display: inline-block;">✅ صالح حتى ${expDateStr}</span>`;
+            if (diffDays < 0) return `<span class="bg-red-100 text-red-700 font-bold px-2.5 py-1 rounded-full text-xs font-mono" style="direction: ltr;">⚠️ منتهي (${expDateStr})</span>`;
+            if (diffDays === 0) return `<span class="bg-red-500 text-white font-bold px-2.5 py-1 rounded-full text-xs font-mono animate-pulse" style="direction: ltr;">🔥 ينتهي اليوم!</span>`;
+            if (diffDays <= 7) return `<span class="bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full text-xs font-mono" style="direction: ltr;">⏳ ينتهي بعد ${diffDays} أيام</span>`;
+            return `<span class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full text-xs font-mono" style="direction: ltr;">✅ صالح حتى ${expDateStr}</span>`;
         }
 
         function rPrds() {
@@ -429,7 +422,9 @@
 
         window.rOrds = function(list = ords) {
             const tb = document.getElementById('tb-orders');
-            if(tb) tb.innerHTML = [...list].reverse().map(o => {
+            // استبعاد وصولات التسديد الصافية من الأرشيف لكي لا تظهر كعمليات بيع وهمية
+            const validOrders = list.filter(o => !(o.items && o.items.length === 1 && o.items[0].name === 'تسديد دين سابق'));
+            if(tb) tb.innerHTML = [...validOrders].reverse().map(o => {
                 let profit = calcOrderProfit(o);
                 let debt = Math.max(0, (o.total_price || 0) - (o.paid_amount || 0));
                 return `<tr>
@@ -490,7 +485,8 @@
             const todayStr = now.getFullYear() + '/' + String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0');
 
             ords.forEach(o => {
-                if (o.created_at && o.created_at.startsWith(todayStr)) {
+                // استبعاد حركات التسديد من حساب المبيعات اليومية لكي لا تؤثر على الأرباح
+                if (o.created_at && o.created_at.startsWith(todayStr) && !(o.items && o.items.length === 1 && o.items[0].name === 'تسديد دين سابق')) {
                     totSales += (o.total_price || 0);
                     totProfit += calcOrderProfit(o);
                 }
@@ -515,7 +511,7 @@
                 <div class="flex gap-2 items-center bg-slate-50 p-2 rounded-xl border">
                     <select onchange="updateRowItem(${idx}, this.value)" class="flex-1 border p-2 rounded-lg text-xs md:text-sm bg-white">
                         <option value="">اختر المنتوج...</option>
-                        ${prds.map(p => `<option value="${p.name}" ${p.name === row.name ? 'selected' : ''}>${p.name} (سعر: ${p.sel} دج - الستوك: ${p.stock})</option>`).join('')}
+                        ${prds.map(p => `<option value="${p.name}" ${p.name === row.name ? 'selected' : ''}>${p.name} (سعر: ${p.sel} دج)</option>`).join('')}
                     </select>
                     <input type="number" min="1" value="${row.qty}" oninput="updateRowQty(${idx}, this.value)" placeholder="الكمية" class="w-20 border p-2 rounded-lg text-xs md:text-sm font-mono" style="direction: ltr; text-align: right;">
                     <input type="number" value="${row.price}" oninput="updateRowPrice(${idx}, this.value)" placeholder="السعر" class="w-24 border p-2 rounded-lg text-xs md:text-sm font-mono" style="direction: ltr; text-align: right;">
@@ -529,26 +525,13 @@
         window.updateRowItem = function(idx, val) {
             orderRows[idx].name = val;
             let prd = prds.find(p => p.name === val);
-            if(prd) {
-                orderRows[idx].price = prd.sel || 0;
-            }
+            if(prd) orderRows[idx].price = prd.sel || 0;
             renderRows();
         };
 
-        window.updateRowQty = function(idx, val) {
-            orderRows[idx].qty = parseFloat(val) || 0;
-            calc();
-        };
-
-        window.updateRowPrice = function(idx, val) {
-            orderRows[idx].price = parseFloat(val) || 0;
-            calc();
-        };
-
-        window.removeRow = function(idx) {
-            orderRows.splice(idx, 1);
-            renderRows();
-        };
+        window.updateRowQty = function(idx, val) { orderRows[idx].qty = parseFloat(val) || 0; calc(); };
+        window.updateRowPrice = function(idx, val) { orderRows[idx].price = parseFloat(val) || 0; calc(); };
+        window.removeRow = function(idx) { orderRows.splice(idx, 1); renderRows(); };
 
         function calc() {
             let tot = 0;
@@ -564,10 +547,8 @@
         }
 
         window.clearOrderForm = function() {
-            const oc = document.getElementById('o-client');
-            const paid = document.getElementById('o-paid');
-            if(oc) oc.value = '';
-            if(paid) paid.value = '';
+            document.getElementById('o-client').value = '';
+            document.getElementById('o-paid').value = '';
             orderRows = [];
             renderRows();
         };
@@ -600,10 +581,7 @@
             };
 
             let { error } = await dbClient.from('orders').insert([newOrder]);
-            if(error) {
-                alert('حدث خطأ أثناء حفظ الوصل: ' + error.message);
-                return;
-            }
+            if(error) { alert('حدث خطأ أثناء حفظ الوصل: ' + error.message); return; }
 
             for(let r of orderRows) {
                 let prd = prds.find(p => p.name === r.name);
@@ -616,13 +594,10 @@
             alert('تم حفظ الوصل بنجاح وتم تحديث المخزون ✅');
             clearOrderForm();
             await loadData();
-
-            if(shouldPrint) {
-                prn(newOrder);
-            }
+            if(shouldPrint) prn(newOrder);
         };
 
-        // دالة تسديد الدين الصحيحة والمضبوطة تماماً لتخفيض الدين واختفائه
+        // دالة تسديد الدين المحدثة: تقوم بتحديث الوصل الأصلي وتصفير الدين فوراً ودون تركه في الأرشيف
         window.openPayDebt = function(clientName, currentDebt) {
             selectedDebtClient = clientName;
             document.getElementById('debt-client-name').innerText = 'المحل: ' + clientName + ' (الدين الحالي: ' + currentDebt.toFixed(2) + ' دج)';
@@ -631,27 +606,39 @@
         };
 
         window.confirmPayDebt = async function() {
-            let amount = parseFloat(document.getElementById('debt-pay-amount').value) || 0;
-            if(amount <= 0) { alert('الرجاء إدخال مبلغ صحيح للتسديد!'); return; }
+            let payAmount = parseFloat(document.getElementById('debt-pay-amount').value) || 0;
+            if(payAmount <= 0) { alert('الرجاء إدخال مبلغ صحيح للتسديد!'); return; }
 
-            // التعديل الجذري: جعل total_price سالب (أو خصم القيمة مباشرة) لكي يتم طرح المبلغ المدفوع من إجمالي الدين الحالي
-            let paymentOrder = {
-                did: Math.floor(1000 + Math.random() * 9000),
-                client_name: selectedDebtClient,
-                items: [{ name: 'تسديد دين سابق', qty: 1, price: 0 }],
-                total_price: -amount, 
-                paid_amount: 0, 
-                created_at: dt()
-            };
+            // البحث عن الوصولات الخاصة بهذا المحل والتي يوجد عليها دين غير مدفوع بالكامل
+            let targetOrders = ords.filter(o => o.client_name === selectedDebtClient && ((o.total_price || 0) - (o.paid_amount || 0)) > 0);
 
-            let { error } = await dbClient.from('orders').insert([paymentOrder]);
-            if(error) {
-                alert('خطأ في عملية التسديد: ' + error.message);
+            if(targetOrders.length === 0) {
+                alert('لا توجد ديون مسجلة لهذا المحل!');
+                cm('pay-debt');
                 return;
             }
 
+            // تحديث الوصل (أو الوصولات) الأقدم لإضافة المبلغ المدفوع وجعل الدين يختفي
+            let remainingToPay = payAmount;
+            for(let ord of targetOrders) {
+                if(remainingToPay <= 0) break;
+                let currentDebtOnOrder = (ord.total_price || 0) - (ord.paid_amount || 0);
+                
+                let amountToApply = Math.min(remainingToPay, currentDebtOnOrder);
+                let newPaidAmount = (ord.paid_amount || 0) + amountToApply;
+
+                // تحديث المدفوع في جدول orders سحابياً
+                let { error } = await dbClient.from('orders').update({ paid_amount: newPaidAmount }).eq('id', ord.id);
+                if(error) {
+                    alert('خطأ أثناء تحديث السداد: ' + error.message);
+                    return;
+                }
+
+                remainingToPay -= amountToApply;
+            }
+
             cm('pay-debt');
-            alert('تم تسجيل عملية التسديد بنجاح وتم إسقاط المبلغ من الديون ✅');
+            alert('تم تسجيل عملية التسديد بنجاح واختفاء المبلغ من ديون المحل ✅');
             await loadData();
         };
 
@@ -796,33 +783,23 @@
             html5QrcodeScanner.start(
                 { facingMode: "environment" },
                 { fps: 10, qrbox: { width: 250, height: 150 } },
-                (decodedText, decodedResult) => {
+                (decodedText) => {
                     stopScanner();
                     if(scanTarget === 'product') {
                         document.getElementById('p-bc').value = decodedText;
                     } else if(scanTarget === 'order') {
                         let prd = prds.find(p => p.bc === decodedText);
-                        if(prd) {
-                            addRow({ name: prd.name, qty: 1, price: prd.sel });
-                        } else {
-                            alert('لم يتم العثور على أي منتوج بهذا الباركود: ' + decodedText);
-                        }
+                        if(prd) addRow({ name: prd.name, qty: 1, price: prd.sel });
+                        else alert('لم يتم العثور على أي منتوج بهذا الباركود: ' + decodedText);
                     }
                 },
-                (errorMessage) => {}
-            ).catch((err) => {
-                alert("تعذر تشغيل الكاميرا: " + err);
-                cm('scanner');
-            });
+                () => {}
+            ).catch((err) => { alert("تعذر تشغيل الكاميرا: " + err); cm('scanner'); });
         };
 
         window.stopScanner = function() {
             if(html5QrcodeScanner) {
-                html5QrcodeScanner.stop().then(() => {
-                    cm('scanner');
-                }).catch(err => {
-                    cm('scanner');
-                });
+                html5QrcodeScanner.stop().then(() => cm('scanner')).catch(() => cm('scanner'));
             } else {
                 cm('scanner');
             }
