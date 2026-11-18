@@ -31,6 +31,7 @@
                 
                 <nav class="flex md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
                     <button type="button" onclick="st('orders')" id="nav-orders" class="whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm bg-amber-600 text-white flex items-center gap-2 flex-shrink-0">🛒 <span>وصل جديد</span></button>
+                    <button type="button" onclick="st('expenses')" id="nav-expenses" class="whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm text-slate-300 hover:bg-slate-800 flex items-center gap-2 flex-shrink-0">💸 <span>المصاريف اليومية</span></button>
                     <button type="button" onclick="st('archive')" id="nav-archive" class="whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm text-slate-300 hover:bg-slate-800 flex items-center gap-2 flex-shrink-0">📂 <span>الأرشيف والأرباح</span></button>
                     <button type="button" onclick="st('products')" id="nav-products" class="whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm text-slate-300 hover:bg-slate-800 flex items-center gap-2 flex-shrink-0">🏷️ <span>المنتجات والمخزون</span></button>
                     <button type="button" onclick="st('debts')" id="nav-debts" class="whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm text-slate-300 hover:bg-slate-800 flex items-center gap-2 flex-shrink-0">💳 <span>ديون المحلات</span></button>
@@ -51,13 +52,21 @@
                 
                 <!-- 1. قسم كتابة الوصل -->
                 <div id="v-orders" class="sec space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div class="bg-emerald-600 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div id="profit-card" class="bg-emerald-600 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between transition">
                             <div>
-                                <span class="text-xs opacity-90 font-bold block">أرباح اليوم التقديرية 📈</span>
+                                <span class="text-xs opacity-90 font-bold block">صافي أرباح اليوم 📈</span>
                                 <span id="stat-today-profit" class="text-2xl font-bold font-mono" style="direction: ltr; display: inline-block;">0.00 DZD</span>
                             </div>
                             <span class="text-3xl">💰</span>
+                        </div>
+                        <div class="bg-rose-600 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between cursor-pointer hover:bg-rose-700 transition" onclick="om('expense')">
+                            <div>
+                                <span class="text-xs opacity-90 font-bold block">مصاريف اليوم (- خصم) 💸</span>
+                                <span id="stat-today-expenses" class="text-2xl font-bold font-mono" style="direction: ltr; display: inline-block;">0.00 DZD</span>
+                                <span class="text-[10px] underline block mt-0.5">+ اضغط لتسجيل مصروف سريع</span>
+                            </div>
+                            <span class="text-3xl">🧾</span>
                         </div>
                         <div class="bg-blue-600 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
                             <div>
@@ -116,6 +125,30 @@
                             <button type="button" onclick="svOrder(false)" class="w-full sm:w-auto bg-amber-600 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-amber-700">💾 حفظ الوصل والخصم من المخزون</button>
                             <button type="button" onclick="svOrder(true)" class="w-full sm:w-auto bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-emerald-700">🖨️ حفظ وطباعة الوصل</button>
                         </div>
+                    </div>
+                </div>
+
+                <!-- 1.5 قسم المصاريف اليومية -->
+                <div id="v-expenses" class="sec space-y-4 hidden">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg md:text-xl font-bold">سجل المصاريف والتكاليف اليومية</h3>
+                            <p class="text-xs text-slate-500">يتم خصم هذه المصاريف تلقائياً من أرباح اليوم الصافية ومزامنتها سحابياً</p>
+                        </div>
+                        <button type="button" onclick="om('expense')" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-xs md:text-sm font-bold hover:bg-rose-700">+ تسجيل مصروف جديد</button>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
+                        <table class="w-full text-right border-collapse min-w-[550px]">
+                            <thead>
+                                <tr class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
+                                    <th class="p-3">التاريخ والوقت</th>
+                                    <th class="p-3">بيان المصروف (السبب)</th>
+                                    <th class="p-3">المبلغ المخصوم</th>
+                                    <th class="p-3 text-center">إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tb-expenses" class="divide-y text-xs md:text-sm"></tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -218,6 +251,25 @@
         </div>
     </div>
 
+    <!-- نافذة تسجيل مصروف -->
+    <div id="m-expense" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl">
+            <h3 class="text-base font-bold text-rose-700">💸 تسجيل مصروف يومي جديد</h3>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">بيان المصروف:</label>
+                <input type="text" id="ex-title" placeholder="مثال: فاتورة الكهرباء، بنزين، علف..." class="w-full border p-2.5 rounded-xl text-xs md:text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">المبلغ (DZD):</label>
+                <input type="number" id="ex-amount" placeholder="0.00" class="w-full border p-2.5 rounded-xl text-xs md:text-sm font-mono" style="direction: ltr; text-align: right;">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="cm('expense')" class="bg-slate-200 px-4 py-2 rounded-xl text-xs font-bold">إلغاء</button>
+                <button type="button" onclick="svExpense()" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-rose-700">خصم من الأرباح وحفظ</button>
+            </div>
+        </div>
+    </div>
+
     <!-- نافذة محل -->
     <div id="m-client" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl">
@@ -297,10 +349,11 @@
         
         const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let cls = [], prds = [], ords = [];
+        let cls = [], prds = [], ords = [], exps = [];
         let eCID = null, ePID = null, selectedDebtClient = null;
         let html5QrcodeScanner = null;
         let scanTarget = 'order';
+        const EXPENSE_MARKER = '__EXPENSE__';
 
         function dt() {
             const n = new Date();
@@ -336,7 +389,21 @@
 
         async function fetchOrders() {
             let { data, error } = await dbClient.from('orders').select('*');
-            if (!error) { ords = data || []; rOrds(); rDebts(); calcProfitAndStats(); }
+            if (!error) {
+                const allRecords = data || [];
+                // فصل الوصولات الحقيقية عن سجلات المصاريف المخزنة سحابياً في نفس الجدول
+                ords = allRecords.filter(r => r.client_name !== EXPENSE_MARKER);
+                exps = allRecords.filter(r => r.client_name === EXPENSE_MARKER).map(r => ({
+                    id: r.id,
+                    title: (r.items && r.items[0] && r.items[0].name) ? r.items[0].name : 'مصروف عام',
+                    amount: r.total_price || 0,
+                    created_at: r.created_at || ''
+                }));
+                rOrds();
+                rDebts();
+                rExps();
+                calcProfitAndStats();
+            }
         }
 
         loadData();
@@ -352,7 +419,14 @@
             const activeNav = document.getElementById('nav-' + id);
             if (activeNav) activeNav.className = "whitespace-nowrap px-3 py-2 md:px-4 md:py-3 rounded-xl font-bold text-xs md:text-sm bg-amber-600 text-white flex items-center gap-2 flex-shrink-0";
             
-            const titles = { 'orders': 'كتابة وصل جديد', 'archive': 'أرشيف الوصولات والأرباح', 'products': 'إدارة المنتجات والمخزون', 'debts': 'ديون المحلات التجارية', 'clients': 'إدارة المحلات' };
+            const titles = { 
+                'orders': 'كتابة وصل جديد', 
+                'expenses': 'سجل المصاريف والتكاليف اليومية',
+                'archive': 'أرشيف الوصولات والأرباح', 
+                'products': 'إدارة المنتجات والمخزون', 
+                'debts': 'ديون المحلات التجارية', 
+                'clients': 'إدارة المحلات' 
+            };
             const pageTitle = document.getElementById('page-title');
             if (pageTitle) pageTitle.innerText = titles[id] || '';
         };
@@ -367,6 +441,57 @@
             if (m) { m.classList.remove('flex'); m.classList.add('hidden'); }
             if(n==='client') { eCID = null; document.getElementById('mt-client').innerText = "إضافة محل جديد"; ['c-name', 'c-ph', 'c-ad'].forEach(i => document.getElementById(i).value = ''); }
             if(n==='product') { ePID = null; document.getElementById('mt-product').innerText = "إضافة منتوج جديد للمخزون"; ['p-name', 'p-bc', 'p-buy', 'p-sel', 'p-stock', 'p-exp'].forEach(i => document.getElementById(i).value = ''); }
+            if(n==='expense') { ['ex-title', 'ex-amount'].forEach(i => document.getElementById(i).value = ''); }
+        };
+
+        // إدارة المصاريف اليومية سحابياً بدون الحاجة لأي جدول إضافي
+        function rExps() {
+            const tb = document.getElementById('tb-expenses');
+            if (!tb) return;
+            if (exps.length === 0) {
+                tb.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">لا توجد مصاريف مسجلة حتى الآن</td></tr>`;
+                return;
+            }
+            tb.innerHTML = [...exps].reverse().map(ex => `<tr>
+                <td class="p-3 text-xs font-mono whitespace-nowrap" style="direction: ltr; text-align: right;">${ex.created_at || ''}</td>
+                <td class="p-3 font-bold text-slate-800">${ex.title || ''}</td>
+                <td class="p-3 text-rose-600 font-bold font-mono whitespace-nowrap" style="direction: ltr; text-align: right;">-${(ex.amount || 0).toFixed(2)} DZD</td>
+                <td class="p-3 text-center">
+                    <button type="button" onclick="delExp(${ex.id})" class="bg-red-50 text-red-600 px-2.5 py-1 rounded text-xs font-bold">🗑️ حذف</button>
+                </td>
+            </tr>`).join('');
+        }
+
+        window.svExpense = async function() {
+            const title = document.getElementById('ex-title').value.trim();
+            const amount = parseFloat(document.getElementById('ex-amount').value) || 0;
+            if (!title) { alert('الرجاء إدخال سبب أو بيان المصروف (مثال: كهرباء)'); return; }
+            if (amount <= 0) { alert('الرجاء إدخال مبلغ صحيح أكبر من الصفر'); return; }
+
+            const newExpRecord = {
+                did: Math.floor(1000 + Math.random() * 9000),
+                client_name: EXPENSE_MARKER,
+                items: [{ name: title, qty: 1, price: amount }],
+                total_price: amount,
+                paid_amount: amount,
+                created_at: dt()
+            };
+
+            const { error } = await dbClient.from('orders').insert([newExpRecord]);
+            if (error) {
+                alert('حدث خطأ أثناء حفظ المصروف: ' + error.message);
+                return;
+            }
+            alert('تم تسجيل المصروف سحابياً وخصمه من أرباح اليوم ✅');
+            cm('expense');
+            await loadData();
+        };
+
+        window.delExp = async function(id) {
+            if (confirm('هل تريد حذف هذا المصروف وإرجاع قيمته إلى الأرباح؟')) {
+                await dbClient.from('orders').delete().eq('id', id);
+                await loadData();
+            }
         };
 
         function popSel() {
@@ -441,16 +566,13 @@
             }).join('');
         };
 
-        // تعديل عرض الديون: عرض المحلات التي لديها وصولات أو ديون فقط لكي يختفي المحل تماماً عند الحذف
         function rDebts() {
             const tb = document.getElementById('tb-debts');
             if(!tb) return;
 
             let debtsMap = {};
-            
-            // جمع الوصولات حسب اسم المحل
             ords.forEach(o => {
-                if (!o.client_name) return;
+                if (!o.client_name || o.client_name === EXPENSE_MARKER) return;
                 if (!debtsMap[o.client_name]) {
                     let clientObj = cls.find(c => c.name === o.client_name) || { name: o.client_name, ph: 'غير محدد' };
                     debtsMap[o.client_name] = { client: clientObj, debt: 0, hasOrders: true };
@@ -502,21 +624,44 @@
         }
 
         function calcProfitAndStats() {
-            let totProfit = 0;
+            let grossProfit = 0;
             let totSales = 0;
+            let todayExpenses = 0;
+
             const now = new Date();
             const todayStr = now.getFullYear() + '/' + String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0');
 
             ords.forEach(o => {
                 if (o.created_at && o.created_at.startsWith(todayStr)) {
                     totSales += (o.total_price || 0);
-                    totProfit += calcOrderProfit(o);
+                    grossProfit += calcOrderProfit(o);
                 }
             });
 
+            exps.forEach(ex => {
+                if (ex.created_at && ex.created_at.startsWith(todayStr)) {
+                    todayExpenses += (ex.amount || 0);
+                }
+            });
+
+            let netProfit = grossProfit - todayExpenses;
+
             const sProfit = document.getElementById('stat-today-profit');
+            const sExpenses = document.getElementById('stat-today-expenses');
             const sSales = document.getElementById('stat-today-sales');
-            if(sProfit) sProfit.innerText = totProfit.toFixed(2) + ' DZD';
+            const profitCard = document.getElementById('profit-card');
+
+            if(sProfit) sProfit.innerText = netProfit.toFixed(2) + ' DZD';
+            if(profitCard) {
+                if (netProfit < 0) {
+                    profitCard.classList.remove('bg-emerald-600');
+                    profitCard.classList.add('bg-red-700');
+                } else {
+                    profitCard.classList.remove('bg-red-700');
+                    profitCard.classList.add('bg-emerald-600');
+                }
+            }
+            if(sExpenses) sExpenses.innerText = todayExpenses.toFixed(2) + ' DZD';
             if(sSales) sSales.innerText = totSales.toFixed(2) + ' DZD';
         }
 
@@ -631,7 +776,6 @@
             if(payAmount <= 0) { alert('الرجاء إدخال مبلغ صحيح للتسديد!'); return; }
 
             let targetOrders = ords.filter(o => o.client_name === selectedDebtClient && ((o.total_price || 0) - (o.paid_amount || 0)) > 0);
-
             if(targetOrders.length === 0) {
                 alert('لا توجد ديون مسجلة لهذا المحل!');
                 cm('pay-debt');
@@ -696,7 +840,6 @@
             let sel = parseFloat(document.getElementById('p-sel').value) || 0;
             let stock = parseInt(document.getElementById('p-stock').value) || 0;
             let exp = document.getElementById('p-exp').value;
-
             if(!name) { alert('أدخل اسم المنتوج'); return; }
 
             if(ePID) {
